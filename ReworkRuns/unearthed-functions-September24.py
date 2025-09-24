@@ -359,15 +359,20 @@ class runmethods(object):
         
         mydrivebase.PID.setconstants(1525, 0, 4); await wait(200)
         
-        await mydrivebase.gyroforwards(375, 600, typestop = mydrivebase.braketank); await wait(500)
-        await mydrivebase.turnrightt(35, 50, typestop = mydrivebase.braketank); await wait(500)
-        await mydrivebase.gyroforwards(332, 600, typestop = mydrivebase.braketank); await wait(500)
+        # ---> Rethink trajecory <--- #
+        # await mydrivebase.gyroforwards(375, 600, typestop = mydrivebase.braketank); await wait(500)
+        # await mydrivebase.turnrightt(35, 45, typestop = mydrivebase.braketank); await wait(500)
+        # await mydrivebase.gyroforwards(332, 600, typestop = mydrivebase.braketank); await wait(500)
 
-        await mydrivebase.turnleftt(125, 50, typestop = mydrivebase.braketank, rgsign = 0); await wait(500)
-        await mydrivebase.gyroforwards(300, 600, typestop = mydrivebase.braketank); await wait(500)
+        # await mydrivebase.turnleftt(125, 50, typestop = mydrivebase.braketank, rgsign = 0); await wait(500)
+        # await mydrivebase.gyroforwards(300, 600, typestop = mydrivebase.braketank); await wait(500)
 
         await rundegrees(mydrivebase.syslefttmotor,  750, 1000); await wait(500)
         await rundegrees(mydrivebase.syslefttmotor, -750, 1000); await wait(500)
+
+        await rundegrees(mydrivebase.sysrighttmotor, 800, 1100); await wait(500)
+        await rundegrees(mydrivebase.sysrighttmotor, -1325, 1100); await wait(500)
+        await rundegrees(mydrivebase.sysrighttmotor, 400, 1100); await wait(250)
 
         return None
     # async def runk3(self): return None
