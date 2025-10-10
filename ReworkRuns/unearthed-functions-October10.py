@@ -384,30 +384,44 @@ class runmethods(object):
 
     async def runk4(self):
 
-        mydrivebase.PID.setconstants(1400, 0, 3); await wait(200)
+        mydrivebase.PID.setconstants(750, 0, 1); await wait(200)
 
-        await mydrivebase.gyroforwards(170, 600, typestop = mydrivebase.braketank); await wait(500)
-        await mydrivebase.turnleftt(57, 45, lfsign = 0, rgsign = 1, typestop = mydrivebase.braketank); await wait(500)
-        await mydrivebase.gyroforwards(275, 400, typestop = mydrivebase.braketank); await wait(500)
+        # await mydrivebase.gyroforwards(170, 600, typestop = mydrivebase.braketank); await wait(500)
+        # await mydrivebase.turnleftt(57, 45, lfsign = 0, rgsign = 1, typestop = mydrivebase.braketank); await wait(500)
+        # await mydrivebase.gyroforwards(275, 400, typestop = mydrivebase.braketank); await wait(500)
 
-        await mydrivebase.gyrobackwards(175, 500, typestop = mydrivebase.braketank); await wait(500)
-        await mydrivebase.turnrightt(57, 45, lfsign = 1, rgsign = 0, typestop = mydrivebase.braketank); await wait(500)
+        # await mydrivebase.gyrobackwards(175, 500, typestop = mydrivebase.braketank); await wait(500)
+        # await mydrivebase.turnrightt(57, 45, lfsign = 1, rgsign = 0, typestop = mydrivebase.braketank); await wait(500)
 
-        await mydrivebase.gyroforwards(678, 700, typestop = mydrivebase. braketank); await wait(500)
-        await mydrivebase.turnrightt(90, 45, typestop = mydrivebase.braketank); await wait(500)
-        await mydrivebase.gyroforwards(150, 500, typestop = mydrivebase.braketank); await wait(500)
+        # await mydrivebase.gyroforwards(678, 700, typestop = mydrivebase. braketank); await wait(500)
+        # await mydrivebase.turnrightt(90, 45, typestop = mydrivebase.braketank); await wait(500)
+        # await mydrivebase.gyroforwards(150, 500, typestop = mydrivebase.braketank); await wait(500)
 
-        await mydrivebase.turnleftt(5, 100, typestop = mydrivebase.braketank); await wait(500)
-        await mydrivebase.gyroforwards(5, 200, typestop = mydrivebase.braketank)
-        await rundegrees(mydrivebase.sysrighttmotor, -900, 1100); await wait(500)
+        # await mydrivebase.turnleftt(5, 100, typestop = mydrivebase.braketank); await wait(500)
+        # await mydrivebase.gyroforwards(5, 200, typestop = mydrivebase.braketank)
+        # await rundegrees(mydrivebase.sysrighttmotor, -900, 1100); await wait(500)
 
-        await mydrivebase.gyrobackwards(300, 600, typestop = mydrivebase.braketank)
+        # await mydrivebase.gyrobackwards(300, 600, typestop = mydrivebase.braketank)
 
-        await rundegrees(mydrivebase.syslefttmotor, 90, 200)
+        # await rundegrees(mydrivebase.syslefttmotor, 90, 200)
          
-        await mydrivebase.gyroforwards(137, 500, typestop = mydrivebase.braketank); await wait(500)
-        await mydrivebase.turnleftt(57, 45, lfsign = 0, rgsign = 1, typestop = mydrivebase.braketank)
-        await mydrivebase.gyroforwards(625, 1000, typestop = mydrivebase.braketank)
+        # await mydrivebase.gyroforwards(137, 500, typestop = mydrivebase.braketank); await wait(500)
+        # await mydrivebase.turnleftt(57, 45, lfsign = 0, rgsign = 1, typestop = mydrivebase.braketank)
+        # await mydrivebase.gyroforwards(625, 1000, typestop = mydrivebase.braketank)
+        
+        await mydrivebase.gyroforwards(157, 475, typestop = mydrivebase.braketank); await wait(250)
+        await mydrivebase.turnleftt(55, 32, lfsign = 0, rgsign = 1, typestop = mydrivebase.braketank); await wait(250)
+        await mydrivebase.gyroforwards(226, 425, typestop = mydrivebase.braketank); await wait(250)
+        
+        await mydrivebase.gyrobackwards(160, 450, typestop = mydrivebase.braketank); await wait(250)
+        await mydrivebase.turnrightt(54, 32, lfsign = 0, rgsign = -1, typestop = mydrivebase.braketank); await wait(250)
+
+        await mydrivebase.gyroforwards(722, 750, typestop = mydrivebase.braketank); await wait(250)
+        await mydrivebase.turnrightt(82, 32, lfsign = 0, rgsign = -1, typestop = mydrivebase.braketank); await wait(250)
+
+        await mydrivebase.gyroforwards(125, 525, typestop = mydrivebase.braketank); await wait(250)
+        await rundegrees(mydrivebase.sysrighttmotor, 1000, 1000)
+
         return None
 
     async def runk5(self): 
