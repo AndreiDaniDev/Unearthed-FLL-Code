@@ -490,11 +490,11 @@ class runmethods(object):
         
         await multitask(
             mydrivebase.syslefttmotor.run_angle(1000, 550),
-            mydrivebase.sysrighttmotor.run_angle(1000, 1100)
+            mydrivebase.sysrighttmotor.run_angle(1000, 1125)
         ); await wait(250)
 
         # ---> Retrieve to base <--- #
-        mydrivebase.syslefttmotor.run_angle(1000, -475); await wait(275) # wait a little bit
+        mydrivebase.syslefttmotor.run_angle(1000, -525); await wait(275) # wait a little bit
 
         await mydrivebase.gyrobackwards(105, 875, typestop = mydrivebase.braketank); await wait(250)
         await mydrivebase.turnleftt(80, 38, lfsign = -1, rgsign = 0, typestop = mydrivebase.braketank); await wait(250)
