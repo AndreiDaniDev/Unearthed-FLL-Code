@@ -438,11 +438,12 @@ class runmethods(object):
 
         await mydrivebase.gyroforwards(250, 600, typestop = mydrivebase.braketank)
         await rundegrees(mydrivebase.sysrighttmotor, -170, 150)
-        
-        await mydrivebase.gyrobackwards(40, 500, typestop = mydrivebase.braketank)
-        await mydrivebase.turnrightt(57, 100, lfsign=1, rgsign=-1, typestop = mydrivebase.braketank)
-        await mydrivebase.gyrobackwards(80, 500, typestop=mydrivebase.braketank)
-        await mydrivebase.turnleftt(10, 100, lfsign=-1, rgsign=1,typestop = mydrivebase.braketank)
+
+        # ---> Smaller turn speeds (~32 - ~45) and wait(~250 - ~500) after each movement) <---
+        await mydrivebase.gyrobackwards(40, 500, typestop = mydrivebase.braketank); await wait(250)
+        await mydrivebase.turnrightt(57, 35, lfsign=1, rgsign=-1, typestop = mydrivebase.braketank); await wait(250)
+        await mydrivebase.gyrobackwards(80, 500, typestop=mydrivebase.braketank); await wait(250)
+        await mydrivebase.turnleftt(10, 35, lfsign=-1, rgsign=1,typestop = mydrivebase.braketank); await wait(250)
 
         return None
 
