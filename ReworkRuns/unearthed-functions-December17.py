@@ -101,7 +101,7 @@ class DriveBase_Controller(object):
         self.gyro = self.hub.imu
         self.gyro.reset_heading(0)
 
-        # print(self.hub.battery.voltage()) # Only in practice runs
+        print(self.hub.battery.voltage()) # Only in practice runs
         if(self.hub.battery.voltage() <= 7500):
             print("Failed to initialize - Battery too low\n")
 
@@ -414,10 +414,9 @@ class runmethods(object):
         # await mydrivebase.gyrobackwards(760, 910, typestop = mydrivebase.braketank); await wait(250)
         # await mydrivebase.turnleftt(90, 42, lfsign = -1, rgsign = 1, typestop = mydrivebase.braketank); await wait(250)
         
-        mydrivebase.sysrighttmotor.run_angle(1100, 3750)
-        await mydrivebase.gyroforwards(10, 500, typestop= mydrivebase.braketank); await wait(250); # ---> Force robot into jig <--- #
+        mydrivebase.sysrighttmotor.run_angle(1100, -1000)
         
-        await mydrivebase.gyrobackwards(813, 825, typestop = mydrivebase.braketank); await wait(250)
+        await mydrivebase.gyrobackwards(801, 1000, typestop = mydrivebase.braketank); await wait(250)
         await mydrivebase.turnleftt(90, 38, lfsign = 0, rgsign = 1, typestop = mydrivebase.braketank); await wait(250)
         
         # ---> Set PID for smaller speeds <--- #
@@ -425,18 +424,18 @@ class runmethods(object):
         await mydrivebase.gyroforwards(130, 275, typestop = mydrivebase.braketank); await wait(200)
     
         await multitask(
-            mydrivebase.sysrighttmotor.run_angle(1100, -2500),
-            mydrivebase.syslefttmotor.run_angle(400, -115)
+            mydrivebase.sysrighttmotor.run_angle(1100, 1000),
+            mydrivebase.syslefttmotor.run_angle(400, -80)
         ); await wait(250)
 
         # await rundegrees(mydrivebase.syslefttmotor, -115 , 400);await wait(200)
         
-        await mydrivebase.gyrobackwards(170,225, typestop = mydrivebase.braketank); await wait(200)
+        await mydrivebase.gyrobackwards(200,225, typestop = mydrivebase.braketank); await wait(200)
         
         # ---> Reinit PID <--- #
         mydrivebase.PID.setconstants(750, 0, 2); await wait(200)
         
-        await mydrivebase.turnrightt(110, 60, lfsign = 1, rgsign = -1, typestop = mydrivebase.braketank); await wait(200)
+        await mydrivebase.turnrightt(90, 60, lfsign = 1, rgsign = -1, typestop = mydrivebase.braketank); await wait(200)
         await mydrivebase.gyroforwards(750, 1100, typestop = mydrivebase.braketank); await wait(200)
 
         return None
@@ -590,45 +589,49 @@ class runmethods(object):
     async def runk7(self):
         
         # ---> Transport all elements and put a flag :) <---
-        mydrivebase.PID.setconstants(1075, 0, 3, 4); await wait(200)
+        mydrivebase.PID.setconstants(975, 0, 2, 4); await wait(200)
 
         # ---> Notes <---
         # syslefttmotor - 425 = lift arm enough
         # syslefttmotor - a lot = let it go
 
-        mydrivebase.syslefttmotor.run_angle(1100, -425); # ---> Lift leftt arm <---
-        mydrivebase.sysrighttmotor.run_angle(675, 94); # ---> Lift rightt (minecart) arm <---  
+        mydrivebase.syslefttmotor.run_angle(1100, 125); # ---> Lower arm :p <--- #
+        mydrivebase.sysrighttmotor.run_angle(675, 126); # ---> Lift rightt (minecart) arm <--- #  
 
-        await mydrivebase.gyroforwards(765, 750, typestop = mydrivebase.braketank); await wait(250)
-        await mydrivebase.turnrightt(100, 30, lfsign = 1, rgsign = 0, typestop = mydrivebase.braketank); await wait(250)
+        await mydrivebase.gyroforwards(800, 675, typestop = mydrivebase.braketank); await wait(250)
+        await mydrivebase.turnrightt(78, 16, lfsign = 1, rgsign = 0, typestop = mydrivebase.braketank); await wait(250)
 
-        mydrivebase.syslefttmotor.run_angle(1100, 440); # ---> Lower leftt arm <---
-        await mydrivebase.gyroforwards(588, 750, typestop = mydrivebase.braketank); await wait(250)
+        await mydrivebase.gyroforwards(495, 750, typestop = mydrivebase.braketank); await wait(250)
 
-        await mydrivebase.sysrighttmotor.run_angle(675, -75); # ---> Lift rightt (minecart) arm <---  
+        await mydrivebase.sysrighttmotor.run_angle(675, -125); # ---> Lift rightt (minecart) arm <---  
 
-        await mydrivebase.gyrobackwards(100, 750, typestop = mydrivebase.braketank); await wait(250)
-        await mydrivebase.turnleftt(108, 34, lfsign = 0, rgsign = 1, typestop = mydrivebase.braketank); await wait(250)
-        await mydrivebase.gyroforwards(392, 750, typestop = mydrivebase.braketank); await wait(250); # >>> old dist = 400 <<< #
+        await mydrivebase.gyrobackwards(92, 750, typestop = mydrivebase.braketank); await wait(250)
+        await mydrivebase.turnleftt(108, 28, lfsign = 0, rgsign = 1, typestop = mydrivebase.braketank); await wait(250)
+        await mydrivebase.gyroforwards(432, 625, typestop = mydrivebase.braketank); await wait(250); # >>> old dist = 400 <<< #
 
-        await mydrivebase.turnleftt(92, 34, lfsign = 0, rgsign = 1, typestop = mydrivebase.braketank); await wait(250)
-        await mydrivebase.gyroforwards(2, 425, typestop = mydrivebase.braketank); await wait(250)
-
-        mydrivebase.sysrighttmotor.run_angle(1100, 192); # ---> Lower rightt (minecart) arm <---  
-        mydrivebase.syslefttmotor.run_angle(1100, -3250); await wait(1250) # ---> Lift leftt arm <---        
+        await mydrivebase.syslefttmotor.run_angle(1100, -425); await wait(250)
+        await mydrivebase.turnleftt(100, 34, lfsign = 0, rgsign = 1, typestop = mydrivebase.braketank); await wait(250)
         
-        await mydrivebase.turnleftt(5, 42, lfsign = 0, rgsign = 1, typestop = mydrivebase.braketank); await wait(250) # >>> May work without this <<< #
-        await mydrivebase.turnrightt(8, 42, lfsign = -1, rgsign = 0, typestop = mydrivebase.braketank); await wait(250) # >>> May work without this <<< #
+        await mydrivebase.syslefttmotor.run_angle(1100, 425); await wait(250)
         
-        # ---> Final push to leave all elements in the zone <--- #
-        mydrivebase.sysrighttmotor.run_angle(1100, -85); # ---> Lift rightt (without minecart) arm <---  
-        mydrivebase.syslefttmotor.run_angle(1100, -625); # ---> Relift (for the x-th time) <--- #
+        await mydrivebase.gyroforwards(45, 575, typestop = mydrivebase.braketank); await wait(250); 
 
-        await mydrivebase.gyroforwards(10, 592, typestop = mydrivebase.braketank); await wait(250) # >>> May work without this <<< #
-        await mydrivebase.gyrobackwards(75, 1100, typestop = mydrivebase.braketank); await wait(250)
+        # ---> Leave all elements (2750 = sum degrees) <--- #
 
-        return None
-    
+        await multitask(
+            delayfunction(350, lambda: mydrivebase.turnleftt(20, 32, lfsign = -1, rgsign = 1, typestop = mydrivebase.braketank)),
+            mydrivebase.syslefttmotor.run_angle(925, -1100) # ---> Leave all elements <--- #
+        ); await wait(250)
+
+        mydrivebase.syslefttmotor.run_angle(1100, -1700) # ---> Leave all elements <--- #
+        
+        await mydrivebase.turnrightt(25, 32, lfsign = 0, rgsign = -1, typestop = mydrivebase.braketank); await wait(250)
+        await mydrivebase.gyroforwards(10, 575, typestop = mydrivebase.braketank); await wait(250)
+        await mydrivebase.gyrobackwards(55, 1100, typestop = mydrivebase.braketank); await wait(250)
+
+        await mydrivebase.sysrighttmotor.run_angle(1100, 220); await wait(250)
+        await mydrivebase.sysrighttmotor.run_angle(1100, -50); await wait(250)
+
     # async def runk8(self): return None
     # async def runk9(self): return None
 
