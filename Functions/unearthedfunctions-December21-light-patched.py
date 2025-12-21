@@ -92,7 +92,7 @@ class PID_Controller(object):
         return; # >>> finish computing controlleroutput <<< #
    
 class DriveBase_Controller(object):
-    def __init__(self, lfmotor: Motor, rgmotor: Motor, syslfmotor: Motor, sysrgmotor: Motor, oneunit: int, scaleunit: int, wheelerror: int = None, syswheelerror: int = None, distbetweenwheel: int = 0, wheelcircumference: int = 0) -> None:
+    def __init__(self, lfmotor: Motor, rgmotor: Motor, syslfmotor: Motor, sysrgmotor: Motor, oneunit: int, scaleunit: int, wheelerror: int = None, syswheelerror: int = None, signencoder: int = 1, distbetweenwheel: int = 0, wheelcircumference: int = 0) -> None:
 
         # ---> Hub and Gyro sensor initialization <--- #
         self.hub = PrimeHub() 
@@ -121,6 +121,8 @@ class DriveBase_Controller(object):
         self.circumferencerobot: int = int(2 * 314 * distbetweenwheel // 100) 
         self.wheelcircumference = int(wheelcircumference)
 
+        self.signencoderwheels: int = signencoder
+
         # ---> Object controller for swaps in programs <--- #
         self.PID = PID_Controller(); self.updatetime: int = 100
 
@@ -139,7 +141,7 @@ class DriveBase_Controller(object):
         self.error: int = 0; self.distance: int = 0
         self.angle: int = 0; self.targetangle: int = 0
 
-        self.position: int = 0; 
+        self.position: int = 0; self.targetposition: int = 0
 
         # ---> Acceptable error for turns <--- #
         self.epsilon: int = 2
@@ -147,8 +149,9 @@ class DriveBase_Controller(object):
 
     async def __initrun__(self) -> None:
 
-        # ---> Reinit PID class and get gyro angle (trick to reset gyro) <--- #
+        # ---> Reinit PID class and trick to reset gyro and position of the wheels <--- #
         self.PID.__init__(); self.targetangle = int(self.gyro.heading()) 
+        self.lefttmotor.reset_angle(0); self.righttmotor.reset_angle(0)
 
         # ---> Reinit constant values <--- #
         self.epsilon = 2; self.epsilonlowwspeed = 32
@@ -168,7 +171,7 @@ class DriveBase_Controller(object):
 
     # ---> Helper functions for travelling distances <--- #
     def getdistance(self, dist: int) -> int: return dist * self.oneunit // self.scaleunit
-    def getmotorsangle(self) -> int: return int(myabs(self.lefttmotor.angle() + self.righttmotor.angle()))
+    def getmotorsangle(self) -> int: return int(self.signencoderwheels * (self.lefttmotor.angle() + self.righttmotor.angle()))
     def getangle(self) -> int: return int(self.gyro.heading())
 
     def computeturnspeed(self, speedangle: int) -> int:
@@ -207,16 +210,20 @@ class DriveBase_Controller(object):
 
         # ---> Reset relative position and gyro (tricks) <--- #
         self.position = self.getmotorsangle(); 
-        self.distance += self.position; 
+        self.targetposition = self.position + self.distance; 
 
         await wait(__ttimeset); # wait x ms to set values
 
-        while(self.position < self.distance):
+        print(self.position, " -> ", self.targetposition, sep = "")
+
+        while(self.position < self.targetposition):
 
             self.error = self.targetangle - self.getangle()
             self.PID.compute(self.error, 1); # >>> ahh sign (need +1) <<< #
 
             # print(self.error, self.PID.error)
+
+            print("Loop: ", self.position, " ", self.distance, sep = "")
 
             self.lfspeed = limitint(self.speed + self.PID.controlleroutput + offsetlf, self.minspeed, self.maxspeed)
             self.rgspeed = limitint(self.speed - self.PID.controlleroutput + offsetrg, self.minspeed, self.maxspeed)
@@ -249,16 +256,20 @@ class DriveBase_Controller(object):
 
         # ---> Reset relative position and gyro (tricks) <--- #
         self.position = self.getmotorsangle(); 
-        self.distance += self.position; 
+        self.targetposition = self.position - self.distance; 
+
+        print(self.position, " -> ", self.distance, sep = "")
 
         await wait(__ttimeset); # wait x ms to set values
 
-        while(self.position < self.distance):
+        while(self.position > self.targetposition):
 
             self.error = self.targetangle - self.getangle()
             self.PID.compute(self.error, -1); # >>> ahh sign (need -1) <<< #
 
             # print(self.error, self.PID.error)
+
+            print("Loop: ", self.position, " ", self.distance, sep = "")
 
             self.lfspeed = -limitint(self.speed + self.PID.controlleroutput + offsetlf, self.minspeed, self.maxspeed)
             self.rgspeed = -limitint(self.speed - self.PID.controlleroutput + offsetrg, self.minspeed, self.maxspeed)
@@ -345,25 +356,25 @@ class DriveBase_Controller(object):
         return None
 
 # ---> All units of measurement are in milimeters <---
-mydrivebase = DriveBase_Controller(
-    Motor(Port.E, Direction.COUNTERCLOCKWISE), 
-    Motor(Port.A, Direction.CLOCKWISE), 
+# mydrivebase = DriveBase_Controller(
+#     Motor(Port.E, Direction.COUNTERCLOCKWISE), 
+#     Motor(Port.A, Direction.CLOCKWISE), 
 
-    Motor(Port.B, Direction.CLOCKWISE), 
-    Motor(Port.F, Direction.COUNTERCLOCKWISE), 
+#     Motor(Port.B, Direction.CLOCKWISE), 
+#     Motor(Port.F, Direction.COUNTERCLOCKWISE), 
 
-    2316, 1000, 0, syswheelerror = 5, distbetweenwheel = 80,
-    wheelcircumference = 49
-)
+#     2316, 1000, 0, syswheelerror = 5, distbetweenwheel = 80,
+#     wheelcircumference = 49
+# )
 
 # My drivebase with two spike prime wheels 
-# mydrivebase = DriveBase_Controller(
-#     Motor(Port.A, Direction.COUNTERCLOCKWISE), 
-#     Motor(Port.C, Direction.CLOCKWISE),
-#     None, None, # we don't have sys motors and we don't call them 
-#     2045, 1000, 0, syswheelerror = 5, distbetweenwheel = 112,
-#     wheelcircumference = 176
-# )
+mydrivebase = DriveBase_Controller(
+    Motor(Port.A, Direction.COUNTERCLOCKWISE), 
+    Motor(Port.C, Direction.CLOCKWISE),
+    None, None, # we don't have sys motors and we don't call them 
+    2045, 1000, 0, syswheelerror = 5, signencoder = 1,
+    distbetweenwheel = 112, wheelcircumference = 176
+)
 
 # Motor Port A = rg db wheel
 # Motor Port B = lf sys wheel
