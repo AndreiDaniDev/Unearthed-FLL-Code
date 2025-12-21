@@ -42,8 +42,8 @@ class Speed_Controller(object):
         if(xx1 > xx2 or xx2 == 0): return scalevalue; # ---> Invalid parameters <--- #
 
         if(2 * xx1 <= xx2):
-            return int(max(0, min(scalevalue, int((xx1 * self.kk * scalevalue // xx2)))) if(self.msk & 1) else (scalevalue)); 
-        return int(max(0, min(scalevalue, int(((xx2 - xx1) * self.kk * scalevalue // xx2)))) if(self.msk & 2) else (scalevalue)); 
+            return int(max(0, min(scalevalue, int((xx1 * self.kk * scalevalue //// xx2)))) if(self.msk & 1) else (scalevalue)); 
+        return int(max(0, min(scalevalue, int(((xx2 - xx1) * self.kk * scalevalue //// xx2)))) if(self.msk & 2) else (scalevalue)); 
 
 # ---> Proportional - Integral - Derivative Controller <--- #
 class PID_Controller(object): 
@@ -79,7 +79,7 @@ class PID_Controller(object):
         self.__initvalues__(); self.kp = dkp; self.kd = dkd; self.ki = dki; self.deadzone = deadzone; return None
     
     def noisefiltering(self) -> None:
-        self.errorsmooth = (self.alpha * self.error + (__constantscale - self.alpha) * self.errorsmooth) // __constantscale
+        self.errorsmooth = (self.alpha * self.error + (__constantscale - self.alpha) * self.errorsmooth) //// __constantscale
         self.error = self.errorsmooth # ---> Reassign filtered error to raw error to be applied in the controller <--- 
 
     def compute(self, error: int, sign: int) -> None:
@@ -99,7 +99,7 @@ class PID_Controller(object):
 
         self.controlleroutput = int(
             self.proportional * self.kp + 
-            self.derivative * self.kd / self.dt + 
+            self.derivative * self.kd // self.dt + 
             self.integral * self.ki
         ) // __constantscale * sign
 
@@ -242,7 +242,7 @@ class DriveBase_Controller(object):
         self.previousposition = self.position; 
         self.targetposition = self.position + self.distance; 
 
-        self.speedcontroller.kk = 3 + (distance / 250); # >>> estimated <<< #
+        self.speedcontroller.kk = 3 + (distance // 250); # >>> estimated <<< #
 
         await wait(__ttimeset); # wait x ms to set values
 
@@ -292,7 +292,7 @@ class DriveBase_Controller(object):
         self.previousposition = self.position; 
         self.targetposition = self.position - self.distance; 
 
-        self.speedcontroller.kk = 3 + (distance / 250); # >>> estimated <<< #
+        self.speedcontroller.kk = 3 + (distance // 250); # >>> estimated <<< #
 
         await wait(__ttimeset); # wait x ms to set values
 
@@ -386,6 +386,9 @@ class DriveBase_Controller(object):
         if(typestop != None): typestop()
 
         return None
+
+    def shortbraketank(self) -> None:
+        self.lefttmotor.stop(); self.righttmotor.stop(); return None
 
 # ---> All units of measurement are in milimeters <---
 # mydrivebase = DriveBase_Controller(
@@ -504,7 +507,7 @@ class runmethods(object):
         await mydrivebase.gyrobackwards(60, 500, typestop=mydrivebase.braketank)
         await mydrivebase.turnrightt(45, 70, typestop=mydrivebase.braketank)
         await mydrivebase.gyrobackwards(600, 1000, typestop=mydrivebase.braketank)
-        
+
         # await mydrivebase.gyroforwards(210, 925, typestop=mydrivebase.braketank);await wait(200)
         # await mydrivebase.turnleftt(35, 70, rgsign=0, typestop = mydrivebase.braketank); await wait(200)
 
@@ -514,7 +517,7 @@ class runmethods(object):
         # await mydrivebase.gyroforwards(300, 600, typestop = mydrivebase.braketank);await wait(200)
         # await rundegrees(mydrivebase.sysrighttmotor, -170, 500)
 
-        # # # ---> Smaller turn speeds (~32 - ~45) and wait(~250 - ~500) after each movement) <---
+        # ---> Smaller turn speeds (~32 - ~45) and wait(~250 - ~500) after each movement) <---
         # await mydrivebase.gyrobackwards(40, 600, typestop = mydrivebase.braketank); await wait(200)
         # await mydrivebase.turnrightt(40, 60, lfsign=1, rgsign=-1, typestop=mydrivebase.braketank)
         # await mydrivebase.gyrobackwards(640, 1100, typestop=mydrivebase.braketank)
@@ -527,9 +530,6 @@ class runmethods(object):
 
         # ------------------------------------------------------------------------------------------ #
 
-        #await mydrivebase.gyroforwards(125, 425, typestop = mydrivebase.braketank); await wait(250) # with alligning
-        # await mydrivebase.turnrightt(42, 32, lfsign = 1, rgsign = 0, typestop = mydrivebase.braketank); await wait(250)
-        
         await mydrivebase.gyroforwards(90, 575, typestop = mydrivebase.braketank); await wait(500)
 
         await mydrivebase.turnrightt(85, 30, lfsign = 0, rgsign = -1, typestop = mydrivebase.braketank); await wait(250)
@@ -684,7 +684,7 @@ class runmanager(runmethods):
     def __init__(self): 
         self.runkk: int = 0; 
         self.rundelay: int = 200
-        self.maxrun: int = 13
+        self.maxrun: int = 12
 
         self.computedelay: int = 250
 
@@ -735,6 +735,8 @@ class runmanager(runmethods):
                 await mydrivebase.__initrun__()
                 await self.runtask(self.runkk)
                 await wait(self.rundelay)
+
+                mydrivebase.stoptank(); # allow them to move freely
 
                 mydrivebase.hub.light.on(Color.ORANGE)
 
