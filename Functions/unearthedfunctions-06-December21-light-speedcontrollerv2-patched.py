@@ -76,7 +76,7 @@ class PID_Controller(object):
         return None
 
     def setconstants(self, dkp: int, dkd: int, dki: int, deadzone: int = 5) -> None:
-        self.__initvalues__(); self.kp = dkp; self.kd = dkd; self.ki = dki; self.deadzone = deadzone; return None
+        self.__initvalues__(); self.kp = dkp; self.kd = dkd; self.ki = dki; self.deadzone = deadzone; self.__initvalues__(); return None
     
     def noisefiltering(self) -> None:
         self.errorsmooth = (self.alpha * self.error + (__constantscale - self.alpha) * self.errorsmooth) //// __constantscale
