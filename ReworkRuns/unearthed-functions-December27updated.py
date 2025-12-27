@@ -1,4 +1,3 @@
-
 # ---> Written by AndreiDani <---
 from pybricks.hubs import PrimeHub
 from pybricks.parameters import Port, Direction, Stop, Axis, Button, Color
@@ -649,8 +648,8 @@ class runmethods(object):
 
     async def runk7(self):
         
-        # ---> Transport all elements and put a flag :) <---
-        mydrivebase.PID.setconstants(975, 0, 2, 4); await wait(200)
+        # ---> Transport all elements and put a flag + get minecart :) <---
+        mydrivebase.PID.setconstants(975, 0, 2, 1); await wait(200); # ~small deadzone, because we need to be really precise with all movements (remains untested)
 
         mydrivebase.syslefttmotor.run_angle(1100, 125); # ---> Lower arm :p <--- #
         mydrivebase.sysrighttmotor.run_angle(675, 126); # ---> Lift rightt (minecart) arm <--- #  
