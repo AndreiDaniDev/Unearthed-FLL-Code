@@ -13,45 +13,41 @@
 
     \bigbreak % --------------------------------------------------------------------------- %
 
-    % ---> This is used to force intertext to limit extending (!!!) <--- %
-    \setlength{\abovedisplayskip}{1pt} \setlength{\belowdisplayskip}{1pt}
+    \begin{equation*}
+        \left\{
+            \begin{array}{l}
+            \begin{aligned}
+            \gamma\, &=\, \text{unghiul țintă} \\
+            \theta\, &=\, \text{unghiul giroscopului} \\
+            \end{aligned}
+            \end{array}
+        \right\}
+        \longrightarrow
+        \left\{
+            \begin{array}{l}
+            E_{raw}(t)\, =\, \gamma - \theta \\
+            E_{raw}(t)\, =\, \text{eroarea de la traiectorie} \\
+            E(t)\, =\, E_{raw}(t)\, =\, \text{eroarea finală} \\
+            \end{array}
+        \right\}
+    \end{equation*}
 
-    % ---> Global functions <--- %
-
-    \makeatletter
-
-    \newlength{\formulalinewidth}
-    \newcommand{\measuremaxwidth}[1]{ 
-        \settowidth{\@tempdima}{$#1$}
-        \ifdim\@tempdima>\formulalinewidth
-            \setlength{\formulalinewidth}{\@tempdima}
-        \fi
-    }
-
-    \makeatother
-
-    \bigbreak % -------------------------------------------->>>>>>>>> :) <<<<<<<<-------------------------------------------- %
-
-    \settowidth{\formulalinewidth}{0pt}
-
-    \measuremaxwidth{\gamma\, =\, \text{unghiul țintă}}
-    \measuremaxwidth{\theta\, =\, \text{unghiul giroscopului}}
-    \measuremaxwidth{E_{raw}(t)\, =\, \gamma - \theta}
-    \measuremaxwidth{E_{raw}(t)\, =\, \text{eroarea de la traiectorie}}
-    \measuremaxwidth{E(t)\, =\, E_{raw}(t)\, =\, \text{eroarea finală}}
-
-    \addtolength{\formulalinewidth}{2em}
-
-    \begin{align*}
+    \[\left\{
+        \begin{array}{l}
+        \begin{aligned}
         \gamma\, &=\, \text{unghiul țintă} \\
         \theta\, &=\, \text{unghiul giroscopului} \\
-        % --------------------------------------------------------------------------- %        
-        \intertext{\centering\rule[2.2pt]{\formulalinewidth}{0.4pt}} 
-        % --------------------------------------------------------------------------- %
-        E_{raw}(t)\, &=\, \gamma - \theta \\
-        E_{raw}(t)\, &=\, \text{eroarea de la traiectorie} \\
-        E(t)\, &=\, E_{raw}(t)\, =\, \text{eroarea finală} \\ 
-    \end{align*}
+        \end{aligned}
+        \end{array}
+    \right\}\]
+
+    \[\left\{
+        \begin{array}{l}
+        E_{raw}(t)\, =\, \gamma - \theta \\
+        E_{raw}(t)\, =\, \text{eroarea de la traiectorie} \\
+        E(t)\, =\, E_{raw}(t)\, =\, \text{eroarea finală} \\
+        \end{array}
+    \right\}\]
 
     % ------------------------------------------------------------------------ %
     % ------------------------------------------------------------------------ %
@@ -60,8 +56,6 @@
     % ------------------------------------------------------------------------ %
 
     \[P(t)\, =\, K_{p}\, \cdot\, E(t)\, \longrightarrow\, \text{proporțional cu eroarea}\]
-    \[I(t)\, =\, K_{i}\, \cdot\, \int_{0}^{t} E(x)\, dx\, \longrightarrow\, \text{suma erorilor din trecut}\]
-    \[I(t)\, =\, K_{i}\, \cdot\, \int_{0}^{t} E(x)\, dx\, \longrightarrow\, \text{suma tuturor erorilor}\]
     \[I(t)\, =\, K_{i}\, \cdot\, \int_{0}^{t} E(x)\, dx\, \longrightarrow\, \text{acumularea totală a erorii}\]
     \[D(t)\, =\, K_{d}\, \cdot\, \frac{d}{dt} E(t)\, \longrightarrow\, \text{rata de schimbare a erorii}\] 
 
