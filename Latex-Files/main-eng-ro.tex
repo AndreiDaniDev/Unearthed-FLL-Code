@@ -1,0 +1,308 @@
+% !TeX root = main.tex
+
+\documentclass{article}
+\usepackage{amsmath,amssymb,algorithm,algpseudocode,mathtools,calc}
+
+\title{PID Controllers}
+\author{AndreiDani}
+
+\begin{document}
+    \maketitle % -> Add title and author <- %
+
+    \(\text{Hello World! This is where our journey starts. :DD}\)
+
+    \bigbreak % --------------------------------------------------------------------------- %
+
+    % ---> This is used to force intertext to limit extending (!!!) <--- %
+    \setlength{\abovedisplayskip}{1pt} \setlength{\belowdisplayskip}{1pt}
+
+    % ---> Global functions <--- %
+
+    \makeatletter
+
+    \newlength{\formulalinewidth}
+    \newcommand{\measuremaxwidth}[1]{ 
+        \settowidth{\@tempdima}{$#1$}
+        \ifdim\@tempdima>\formulalinewidth
+            \setlength{\formulalinewidth}{\@tempdima}
+        \fi
+    }
+
+    \makeatother
+
+    \bigbreak % -------------------------------------------->>>>>>>>> :) <<<<<<<<-------------------------------------------- %
+
+    \settowidth{\formulalinewidth}{0pt}
+
+    \measuremaxwidth{\gamma\, =\, \text{target angle}}
+    \measuremaxwidth{\theta\, =\, \text{angle of the gyroscope}}
+    \measuremaxwidth{E_{raw}(t)\, =\, \gamma - \theta}
+    \measuremaxwidth{E_{raw}(t)\, =\, \text{error from the trajectory}}
+    \measuremaxwidth{E(t)\, =\, E_{raw}(t)\, =\, \text{final error}}
+
+    \addtolength{\formulalinewidth}{2em}
+
+    \begin{align*}
+        \gamma\, &=\, \text{target angle} \\
+        \theta\, &=\, \text{angle of the gyroscope} \\
+        % --------------------------------------------------------------------------- %        
+        \intertext{\centering\rule[2.2pt]{\formulalinewidth}{0.4pt}} 
+        % --------------------------------------------------------------------------- %
+        E_{raw}(t)\, &=\, \gamma - \theta \\
+        E_{raw}(t)\, &=\, \text{error from the trajectory} \\
+        E(t)\, &=\, E_{raw}(t)\, =\, \text{final error} \\  
+    \end{align*}
+
+    \bigbreak % ------------------------------------------------------------------------ %
+    \hrule % --------------------------------------------------------------------------- %
+    \bigbreak % ------------------------------------------------------------------------ %
+
+    \settowidth{\formulalinewidth}{0pt}
+
+    \measuremaxwidth{\gamma\, =\, \text{unghiul țintă}}
+    \measuremaxwidth{\theta\, =\, \text{unghiul giroscopului}}
+    \measuremaxwidth{E_{raw}(t)\, =\, \gamma - \theta}
+    \measuremaxwidth{E_{raw}(t)\, =\, \text{eroarea de la traiectorie}}
+    \measuremaxwidth{E(t)\, =\, E_{raw}(t)\, =\, \text{eroarea finală}}
+
+    \addtolength{\formulalinewidth}{2em}
+
+    \begin{align*}
+        \gamma\, &=\, \text{unghiul țintă} \\
+        \theta\, &=\, \text{unghiul giroscopului} \\
+        % --------------------------------------------------------------------------- %        
+        \intertext{\centering\rule[2.2pt]{\formulalinewidth}{0.4pt}} 
+        % --------------------------------------------------------------------------- %
+        E_{raw}(t)\, &=\, \gamma - \theta \\
+        E_{raw}(t)\, &=\, \text{eroarea de la traiectorie} \\
+        E(t)\, &=\, E_{raw}(t)\, =\, \text{eroarea finală} \\ 
+    \end{align*}
+
+    % ------------------------------------------------------------------------ %
+    % ------------------------------------------------------------------------ %
+    \newpage % >>> ------------------------------------------------------- <<< % 
+    % ------------------------------------------------------------------------ %
+    % ------------------------------------------------------------------------ %
+
+    \[P(t)\, =\, K_{p}\, \cdot\, E(t)\, \longrightarrow\, \text{proportional to the error}\]
+    \[I(t)\, =\, K_{i}\, \cdot\, \int_{0}^{t} E(x)\, dx\, \longrightarrow\, \text{sum of past errors}\]
+    \[I(t)\, =\, K_{i}\, \cdot\, \int_{0}^{t} E(x)\, dx\, \longrightarrow\, \text{total error accumulation}\]
+    \[D(t)\, =\, K_{d}\, \cdot\, \frac{d}{dt} E(t)\, \longrightarrow\, \text{rate of change of the error}\] 
+
+    \[C(t)\, =\, K_{p}\, \cdot\, E(t)\, +\, K_{i}\, \cdot\, \int_{0}^{t} E(x)\, dx\, +\, K_{d}\, \cdot\, \frac{d}{dt} E(t)\, \longrightarrow\, \text{final correction}\]
+
+    \bigbreak % ------------------------------------------------------------------------ %
+    \hrule % --------------------------------------------------------------------------- %
+    \bigbreak % ------------------------------------------------------------------------ %
+
+    \[E_{f}(t)\, =\, \alpha\, \cdot\, E_{raw}(t)\, +\, (1 - \alpha)\, \cdot\, E_{f}(t - 1)\, \longrightarrow\, \text{filtered error}\]
+    \[\alpha \in [0, 1]\, \longrightarrow\, \text{constant for noise filtering}\]
+    \[\rightarrow\, \text{cute little graph to demonstrate the noise filtering}\, \leftarrow\]
+
+    \[E(t)\, =\, E_{raw}(t) \quad \textbf{or} \quad E_{f}(t)\]
+    \[*E(t)\, =\, E_{raw}(t)\, =\, E_{f}(t)\, \rightarrow\, \alpha\, =\, 1\]
+
+    \bigbreak % ------------------------------------------------------------------------ %
+    \hrule % --------------------------------------------------------------------------- %
+    \bigbreak % ------------------------------------------------------------------------ %
+
+    \[\omega_{i} \in [0, 2^{20}]\, \longrightarrow\, I(t) \in (K_{i} \cdot [-\omega_{i}, +\omega_{i}])\]
+    \[I(t)\, =\, K_{i}\, \cdot\, \max(-\omega_{i}, \min(+\omega_{i}, \int_{0}^{t} E(x)\, dx))\, \longrightarrow\, \text{integral windup}\]
+
+    \bigbreak % ------------------------------------------------------------------------ %
+    \hrule % --------------------------------------------------------------------------- %
+    \bigbreak % ------------------------------------------------------------------------ %
+
+    Definitions constants % start new paragraph % 
+    \begin{align*}
+        \omega_{variable}\, &=\, \text{upper bound for a variable}\, \longrightarrow\, \omega_{variable} \in [0, 2^{20}] \\
+        \omega_{variable}\, &\rightarrow\, \text{variable} \in [-\omega_{variable}, +\omega_{variable}] \\
+        K_{p}, K_{i}, K_{d}\, &=\, \text{constants used in the PID controller} \\   
+        \alpha\, &=\, \text{constant used by the gyro noise filtering algorithm} \\
+        \epsilon_{error}\, &=\, \text{range of acceptable errors}\, \rightarrow\, \epsilon_{error} \in [0, 10]\, \text{degrees}\\
+        \epsilon_{error}\, &\rightarrow\, \textbf{acceptable}\, \Leftrightarrow\, (E(t) \in [-\epsilon_{error}, +\epsilon_{error}]) \\  
+    \end{align*}
+    
+    % ------------------------------------------------------------------------ %
+    % ------------------------------------------------------------------------ %
+    \newpage % >>> ------------------------------------------------------- <<< % 
+    % ------------------------------------------------------------------------ %
+    % ------------------------------------------------------------------------ %
+
+    \[P(t)\, =\, K_{p}\, \cdot\, E(t)\, \longrightarrow\, \text{proporțional cu eroarea}\]
+    \[I(t)\, =\, K_{i}\, \cdot\, \int_{0}^{t} E(x)\, dx\, \longrightarrow\, \text{suma erorilor din trecut}\]
+    \[I(t)\, =\, K_{i}\, \cdot\, \int_{0}^{t} E(x)\, dx\, \longrightarrow\, \text{suma tuturor erorilor}\]
+    \[I(t)\, =\, K_{i}\, \cdot\, \int_{0}^{t} E(x)\, dx\, \longrightarrow\, \text{acumularea totală a erorii}\]
+    \[D(t)\, =\, K_{d}\, \cdot\, \frac{d}{dt} E(t)\, \longrightarrow\, \text{rata de schimbare a erorii}\] 
+
+    \[C(t)\, =\, K_{p}\, \cdot\, E(t)\, +\, K_{i}\, \cdot\, \int_{0}^{t} E(x)\, dx\, +\, K_{d}\, \cdot\, \frac{d}{dt} E(t)\, \longrightarrow\, \text{corectarea finală}\]
+
+    \bigbreak % ------------------------------------------------------------------------ %
+    \hrule % --------------------------------------------------------------------------- %
+    \bigbreak % ------------------------------------------------------------------------ %
+
+    \[E_{f}(t)\, =\, \alpha\, \cdot\, E_{raw}(t)\, +\, (1 - \alpha)\, \cdot\, E_{f}(t - 1)\, \longrightarrow\, \text{eroarea filtrată}\] \
+    \[\alpha \in [0, 1]\, \longrightarrow\, \text{constantă pentru filtrarea erorii}\]
+
+    \[E(t)\, =\, E_{raw}(t) \quad \textbf{sau} \quad E_{f}(t)\]
+    \[*E(t)\, =\, E_{raw}(t)\, =\, E_{f}(t)\, \rightarrow\, \alpha\, =\, 1\]
+    
+    \bigbreak % ------------------------------------------------------------------------ %
+    \hrule % --------------------------------------------------------------------------- %
+    \bigbreak % ------------------------------------------------------------------------ %
+    
+    \[\omega_{i} \in [0, 2^{20}]\, \longrightarrow\, I(t) \in (K_{i} \cdot [-\omega_{i}, +\omega_{i}])\]
+    \[I(t)\, =\, K_{i}\, \cdot\, \max(-\omega_{i}, \min(+\omega_{i}, \int_{0}^{t} E(x)\, dx))\, \longrightarrow\, \text{limitarea integralei}\]
+
+    \bigbreak % ------------------------------------------------------------------------ %
+    \hrule % --------------------------------------------------------------------------- %
+    \bigbreak % ------------------------------------------------------------------------ %
+
+    Definiții constante % start new paragraph % 
+    \begin{align*}
+        \omega_{variable}\, &=\, \text{limită pentru o variabilă}\, \longrightarrow\, \omega_{variable} \in [0, 2^{20}] \\
+        \omega_{variable}\, &\rightarrow\, \text{variable} \in [-\omega_{variable}, +\omega_{variable}] \\
+        K_{p}, K_{i}, K_{d}\, &=\, \text{constantele folosite în controlerul PID} \\   
+        \alpha\, &=\, \text{constantă folosită pentru filtrarea zgomotului giroscopului} \\
+        \epsilon_{error}\, &=\, \text{intervalul erorilor acceptabile}\, \rightarrow\, \epsilon_{error} \in [0, 10]\, \text{grade}\\
+        \epsilon_{error}\, &\rightarrow\, \textbf{acceptabilă}\, \Leftrightarrow\, (E(t) \in [-\epsilon_{error}, +\epsilon_{error}]) \\  
+    \end{align*}
+
+    % ------------------------------------------------------------------------ %
+    % ------------------------------------------------------------------------ %
+    % ------------------------------------------------------------------------ %
+    % ------------------------------------------------------------------------ %
+    % ------------------------------------------------------------------------ %
+    % ------------------------------------------------------------------------ %
+    % ------------------------------------------------------------------------ %
+    % ------------------------------------------------------------------------ %
+    % ------------------------------------------------------------------------ %
+    % ------------------------------------------------------------------------ %
+    % ------------------------------------------------------------------------ %
+    % ------------------------------------------------------------------------ %
+    % ------------------------------------------------------------------------ %
+    % ------------------------------------------------------------------------ %
+    % ------------------------------------------------------------------------ %
+    % ------------------------------------------------------------------------ %
+    \newpage % >>> ------------------------------------------------------- <<< % 
+    % ------------------------------------------------------------------------ %
+    % ------------------------------------------------------------------------ %
+    % ------------------------------------------------------------------------ %
+    % ------------------------------------------------------------------------ %
+    % ------------------------------------------------------------------------ %
+    % ------------------------------------------------------------------------ %
+    % ------------------------------------------------------------------------ %
+    % ------------------------------------------------------------------------ %
+    % ------------------------------------------------------------------------ %
+    % ------------------------------------------------------------------------ %
+    % ------------------------------------------------------------------------ %
+    % ------------------------------------------------------------------------ %
+    % ------------------------------------------------------------------------ %
+    % ------------------------------------------------------------------------ %
+    % ------------------------------------------------------------------------ %
+    % ------------------------------------------------------------------------ %
+
+    We will now start the formulas for the functions (transforming speeds and other things like that) 
+    \bigbreak % ------------------------------------------------------------------------ %
+
+    \begin{align*}
+        c_{wheel}\, &=\, \frac{360^{\circ}}{2\pi r}\, \longrightarrow\, \text{necessary degrees to move 1 unit} \\
+        c_{wheel}\, &=\, \frac{360^{\circ}}{\pi \cdot 49.5\, \text{mm}}\, \approx\, 2.314^{\circ}\, \longrightarrow\, \text{with our wheels} \\
+    \end{align*}
+
+    \begin{align*}    
+        d_{unit}\, &=\, \text{distance in the unit of measurement} \\
+        d_{degrees}\, &=\, d_{unit}\, \cdot\, c_{wheel}\, \longrightarrow\, \text{transformed distance} \\
+    \end{align*}
+    
+    \bigbreak % ------------------------------------------------------------------------ %
+    \hrule % --------------------------------------------------------------------------- %
+    \bigbreak % ------------------------------------------------------------------------ %
+
+    \begin{align*}
+        s_{degrees}\, &=\, \textstyle\text{the turn speed with one wheel in $\frac{\text{degrees}}{\text{1 second}}$} \\
+        d_{wheels}\, &=\, \text{the distance between the two wheels} \\
+    \end{align*}
+
+    \[d_{path-wheels}\, =\, \frac{2\pi\, \cdot\, d_{wheels}}{360^{\circ}}\, \longrightarrow\, \text{the distance to turn one degree}\] 
+    \[d_{speed}\, =\, d_{path-wheels}\, \cdot\, s_{degrees}\, \longrightarrow\, \text{the distance to turn the desired speed}\]
+    
+    \[\rightarrow\, \left\langle \begin{array}{c}
+        \text{now we know the necessary distance to move per second,} \\
+        \text{so we need to transform $d_{speed}$ into motor speed} \\
+        \text{(using the formulas from moving forwards and backwards)} \\
+    \end{array}\, \right\rangle \leftarrow\]
+
+    \[s_{wheel}\, =\, d_{speed}\, \cdot\, c_{wheel}\, \longrightarrow\, \text{the final motor speed :D}\]
+
+    \bigbreak % ------------------------------------------------------------------------ %
+    \hrule % --------------------------------------------------------------------------- %
+    \bigbreak % ------------------------------------------------------------------------ %
+
+    \begin{align*}
+        \text{motor.stalled()}\, &=\, \textbf{true}\, \Leftrightarrow\, (\text{motor.position()} - \text{lastt}_{\text{position}} < \text{threshold}) \\
+        \text{motor.stalled()}\, &=\, \text{check if a motor has stalled - can't move anymore} \\
+        \text{lastt}_{\text{position}}\, &=\, \text{motor.position()}\, \rightarrow\, \text{updated and checked after a set time} \\
+    \end{align*}
+    \[\rightarrow\, \text{check if a motor is stalled}\, \leftarrow\]
+ 
+    \bigbreak % ------------------------------------------------------------------------ %
+    \hrule % --------------------------------------------------------------------------- %
+    \bigbreak % ------------------------------------------------------------------------ %
+
+    % ------------------------------------------------------------------------ %
+    % ------------------------------------------------------------------------ %
+    \newpage % >>> ------------------------------------------------------- <<< % 
+    % ------------------------------------------------------------------------ %
+    % ------------------------------------------------------------------------ %
+
+    \begin{align*}
+        c_{wheel}\, &=\, \frac{360^{\circ}}{2\pi r}\, \longrightarrow\, \text{gradele necesare pentru a ne mișca o unitate} \\
+        c_{wheel}\, &=\, \frac{360^{\circ}}{\pi \cdot 49.5\, \text{mm}}\, \approx\, 2.314^{\circ}\, \longrightarrow\, \text{pentru roțile noastre} \\
+    \end{align*}
+
+    \begin{align*}    
+        d_{unit}\, &=\, \text{distanța in unitatea de masură} \\
+        d_{degrees}\, &=\, d_{unit}\, \cdot\, c_{wheel}\, \longrightarrow\, \text{distanța transformată} \\
+    \end{align*}
+    
+    \bigbreak % ------------------------------------------------------------------------ %
+    \hrule % --------------------------------------------------------------------------- %
+    \bigbreak % ------------------------------------------------------------------------ %
+
+    \begin{align*}
+        s_{degrees}\, &=\, \textstyle\text{viteza de rotație cu o roată în $\frac{\text{grade}}{\text{1 secundă}}$} \\
+        d_{wheels}\, &=\, \text{distanța între cele două roți}  \\
+    \end{align*}
+
+    \[d_{path-wheels}\, =\, \frac{2\pi\, \cdot\, d_{wheels}}{360^{\circ}}\, \longrightarrow\, \text{distanța pentru a roti robotul cu $1^{\circ}$}\] 
+    \[d_{speed}\, =\, d_{path-wheels}\, \cdot\, s_{degrees}\, \longrightarrow\, \text{distanța pentru a ne roti cu viteza dorită}\]
+    
+    % bla bla bla %
+    \[\rightarrow\, \left\langle \begin{array}{c}
+        \text{now we know the necessary distance to move per second,} \\
+        \text{so we need to transform $d_{speed}$ into motor speed} \\
+        \text{(using the formulas from moving forwards and backwards)} \\
+    \end{array}\, \right\rangle \leftarrow\]
+
+    \[s_{wheel}\, =\, d_{speed}\, \cdot\, c_{wheel}\, \longrightarrow\, \text{viteza finală a motorului :D}\]
+
+    \bigbreak % ------------------------------------------------------------------------ %
+    \hrule % --------------------------------------------------------------------------- %
+    \bigbreak % ------------------------------------------------------------------------ %
+
+    \begin{align*}
+        \text{motor.stalled()}\, &=\, \textbf{true}\, \Leftrightarrow\, (\text{motor.position()} - \text{lastt}_{\text{position}} < \text{prag}) \\
+        \text{motor.stalled()}\, &=\, \text{verifică dacă motorul s-a oprit $-$ nu se mai poate mișca} \\
+        \text{lastt}_{\text{position}}\, &=\, \text{motor.position()}\, \rightarrow\, \text{schimbată după un interval de timp} \\
+    \end{align*}
+    \[\rightarrow\, \text{check if a motor is stalled}\, \leftarrow\]
+ 
+    \bigbreak % ------------------------------------------------------------------------ %
+    \hrule % --------------------------------------------------------------------------- %
+    \bigbreak % ------------------------------------------------------------------------ %
+
+    % --------------------------------------------------------------------------- %
+
+\end{document}
+
