@@ -1,4 +1,3 @@
-
 # ---> Written by AndreiDani <---
 from pybricks.hubs import PrimeHub
 from pybricks.parameters import Port, Direction, Stop, Axis, Button, Color
@@ -419,7 +418,7 @@ class DriveBase_Controller(object):
 
         await multitask(func(), wait(ttime), race = True);
 
-        typestop(); # ---> stop if we got time limit exceeded <--- #
+        if(typestop != None): typestop(); # ---> stop if we got time limit exceeded <--- #
 
         return None; 
 
@@ -580,37 +579,40 @@ class runmethods(object):
 
     async def runk5(self): # ---> Stones (needs a lot of tuning with the new sistem) <--- #
         
-        mydrivebase.PID.setconstants(1750, 2500, 3, deadzone = 0, alphanoise = 1000); await wait(200)
+        mydrivebase.PID.setconstants(2250, 2500, 4, deadzone = 0, alphanoise = 1000); await wait(200)
 
         # ------------------------------------------------------------------------------------------ # (finised)
 
         mydrivebase.syslefttmotor.run_angle(1000, 200)
         await mydrivebase.gyrobackwards(20, 625, typestop = mydrivebase.braketank, initpid = 1); await wait(200)
-        await mydrivebase.gyroforwards(200, 675, typestop = mydrivebase.braketank, initpid = 1); await wait(200)
+        await mydrivebase.gyroforwards(210, 675, typestop = mydrivebase.braketank, initpid = 1); await wait(200)
 
         await mydrivebase.turnleftt(20, 30, lfsign = 0, rgsign = 1, typestop = mydrivebase.braketank); await wait(250)
             
-        await mydrivebase.gyroforwards(340, 675, typestop = mydrivebase.braketank, initpid = 0); await wait(250)
+        await mydrivebase.gyroforwards(334, 675, typestop = mydrivebase.braketank, initpid = 0); await wait(250)
         
-        await mydrivebase.turnrightt(70, 32, lfsign = 1, rgsign = 0, typestop = mydrivebase.braketank); await wait(250)
-        mydrivebase.syslefttmotor.run_angle(1000, -325); await wait(250) # return to
+        await mydrivebase.turnrightt(65, 50, lfsign = 1, rgsign = 0, typestop = mydrivebase.braketank); await wait(250)
 
-        mydrivebase.sysrighttmotor.run_angle(1100, 675); await wait(500);
-        await mydrivebase.gyroforwards(250, 1100, typestop = mydrivebase.braketank, initpid = 0); await wait(200)
+        await mydrivebase.syslefttmotor.run_angle(1000, -325); wait(250)
+
+        # ---> lower long arm while moving forwards <--- ///
+        await multitask(
+            delayfunction(350, lambda: mydrivebase.gyroforwards(250, 1100, typestop = mydrivebase.braketank, initpid = 0)),
+            mydrivebase.sysrighttmotor.run_angle(1100, 725)
+        ); await wait(500)
 
         await multitask(
-            mydrivebase.trytimelimit(lambda: mydrivebase.syslefttmotor.run_angle(1000, 325), 2000, lambda: mydrivebase.sysrighttmotor.hold()),
-            mydrivebase.trytimelimit(lambda: mydrivebase.sysrighttmotor.run_angle(1000, -675), 2000, lambda: mydrivebase.sysrighttmotor.hold())
+            mydrivebase.trytimelimit(lambda: mydrivebase.syslefttmotor.run_angle(1100, 350), 775, lambda: mydrivebase.sysrighttmotor.hold()),
+            mydrivebase.trytimelimit(lambda: mydrivebase.sysrighttmotor.run_angle(1100, -825), 2000, None)
         ); await wait(250)
 
-        await mydrivebase.gyrobackwards(125, 325, typestop = mydrivebase.braketank, initpid = 1); await wait(250)
-        
-        # # ---> Retrieve to base <--- #
-        # mydrivebase.syslefttmotor.run_angle(1000, -275); await wait(275) # wait a little bit
+        await mydrivebase.gyrobackwards(125, 525, offsetrg = -100, typestop = mydrivebase.braketank, initpid = 1); await wait(250)
 
-        # await mydrivebase.gyrobackwards(125, 1100, typestop = mydrivebase.braketank, initpid = 0); await wait(250)
-        # await mydrivebase.turnleftt(75, 75, lfsign = -1, rgsign = 0, typestop = mydrivebase.braketank); await wait(250)
-        # await mydrivebase.gyrobackwards(650, 1100, typestop = mydrivebase.braketank, initpid = 0); await wait(250)
+        # await mydrivebase.gyrobackwards(125, 525, offsetrg = -100, typestop = mydrivebase.braketank, initpid = 1); await wait(250)
+        
+        # ---> Retrieve to base <--- #
+        await mydrivebase.turnleftt(60, 75, lfsign = -1, rgsign = 0, typestop = mydrivebase.braketank); await wait(250)
+        await mydrivebase.gyrobackwards(650, 1100, offsetrg = -275, typestop = mydrivebase.braketank, initpid = 0); await wait(250)
 
         # ------------------------------------------------------------------------------------------ #
 
