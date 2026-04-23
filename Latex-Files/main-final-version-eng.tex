@@ -1,0 +1,558 @@
+% !TeX root = main.tex
+
+\documentclass{article}
+\usepackage{amsmath,amssymb,algorithm,algpseudocode,mathtools,calc,tikz,xcolor}
+
+\usepackage{subcaption,caption}
+
+\usetikzlibrary{backgrounds,decorations.pathmorphing,positioning,matrix,calc}
+
+\title{PID Controllers}
+\author{AndreiDani}
+
+\begin{document}
+    \maketitle % -> Add title and author <- %
+
+    \(\text{Hello World! This is where our journey starts. :DD}\)
+
+    \bigbreak % --------------------------------------------------------------------------- %
+
+    \begin{equation*}
+        \left\{
+            \begin{array}{l}
+            \begin{aligned}
+            \gamma\, &=\, \text{target angle} \\
+            \theta\, &=\, \text{gyro angle} \\
+            \end{aligned}
+            \end{array}
+        \right\}
+        \longrightarrow
+        \left\{
+            \begin{array}{l}
+            E_{raw}(t)\, =\, \gamma - \theta \\
+            E_{raw}(t)\, =\, \text{trajectory error} \\
+            E(t)\, =\, E_{raw}(t)\, =\, \text{final error} \\
+            \end{array}
+        \right\}
+    \end{equation*}
+
+    \[\left\{
+        \begin{array}{l}
+        \begin{aligned}
+        \gamma\, &=\, \text{target angle}\, =\, \text{gamma} \\
+        \theta\, &=\, \text{gyro angle}\, =\, \text{theta} \\
+        \end{aligned}
+        \end{array}
+    \right\}\]
+
+    \[\left\{
+        \begin{array}{l}
+        E_{raw}(t)\, =\, \gamma - \theta \\
+        E_{raw}(t)\, =\, \text{trajectory error} \\
+        E(t)\, =\, E_{raw}(t)\, =\, \text{final error} \\
+        \end{array}
+    \right\}\]
+
+    \[a_{b_{i}}\] % cool little thing to keep me sane
+    \[\curvearrowright\]
+
+    % ------------------------------------------------------------------------ %
+    % ------------------------------------------------------------------------ %
+    \newpage % >>> ------------------------------------------------------- <<< % 
+    % ------------------------------------------------------------------------ %
+    % ------------------------------------------------------------------------ %
+
+    \[P(t)\, =\, K_{p}\, \cdot\, E(t)\, \longrightarrow\, \text{proportional to the error}\]
+    \[I(t)\, =\, K_{i}\, \cdot\, \int_{0}^{t} E(x)\, dx\, \longrightarrow\, \text{accumulated errors}\]
+    \[D(t)\, =\, K_{d}\, \cdot\, \frac{d}{dt} E(t)\, \longrightarrow\, \text{the error's rate of change}\] 
+
+    \[C(t)\, =\, K_{p}\, \cdot\, E(t)\, +\, K_{i}\, \cdot\, \int_{0}^{t} E(x)\, dx\, +\, K_{d}\, \cdot\, \frac{d}{dt} E(t)\, \longrightarrow\, \text{final correction}\]
+
+    \bigbreak % ------------------------------------------------------------------------ %
+    \hrule % --------------------------------------------------------------------------- %
+    \bigbreak % ------------------------------------------------------------------------ %
+
+    \[E_{f}(t)\, =\, \alpha\, \cdot\, E_{raw}(t)\, +\, (1 - \alpha)\, \cdot\, E_{f}(t - 1)\, \longrightarrow\, \text{filtered error}\] \
+    \[\alpha \in [0, 1]\, \longrightarrow\, \text{constant for the noise filtering algorithm}\]
+
+    \[E(t)\, =\, E_{raw}(t) \quad \textbf{or} \quad E_{f}(t)\]
+    
+    \bigbreak % ------------------------------------------------------------------------ %
+    \hrule % --------------------------------------------------------------------------- %
+    \bigbreak % ------------------------------------------------------------------------ %
+    
+    \[\omega_{i} \in [0, 2^{20}]\, \longrightarrow\, I(t) \in (K_{i} \cdot [-\omega_{i}, +\omega_{i}])\]
+    \[I(t)\, =\, K_{i}\, \cdot\, \max(-\omega_{i}, \min(+\omega_{i}, \int_{0}^{t} E(x)\, dx))\, \longrightarrow\, \text{integral windup}\]
+
+    \bigbreak % ------------------------------------------------------------------------ %
+    \hrule % --------------------------------------------------------------------------- %
+    \bigbreak % ------------------------------------------------------------------------ %
+
+    Definitions of constants % start new paragraph % 
+    \begin{align*}
+        \omega_{variable}\, &=\, \text{the bound for a term}\, \longrightarrow\, \omega_{variable} \in [0, 2^{20}] \\
+        \omega_{variable}\, &\rightarrow\, \text{variable} \in [-\omega_{variable}, +\omega_{variable}] \\
+        K_{p}, K_{i}, K_{d}\, &=\, \text{constants used by the PID Controller} \\   
+        \alpha\, &=\, \text{constant for the noise filtering algorithm} \\
+        \epsilon_{error}\, &=\, \text{range of acceptable errors}\, \rightarrow\, \epsilon_{error} \in [0, 10]\, \text{degrees}\\
+        \epsilon_{error}\, &\rightarrow\, \textbf{acceptable}\, \Leftrightarrow\, (E(t) \in [-\epsilon_{error}, +\epsilon_{error}]) \\  
+    \end{align*}
+
+    % ------------------------------------------------------------------------ %
+    % ------------------------------------------------------------------------ %
+    % ------------------------------------------------------------------------ %
+    % ------------------------------------------------------------------------ %
+    % ------------------------------------------------------------------------ %
+    % ------------------------------------------------------------------------ %
+    % ------------------------------------------------------------------------ %
+    % ------------------------------------------------------------------------ %
+    % ------------------------------------------------------------------------ %
+    % ------------------------------------------------------------------------ %
+    % ------------------------------------------------------------------------ %
+    % ------------------------------------------------------------------------ %
+    % ------------------------------------------------------------------------ %
+    % ------------------------------------------------------------------------ %
+    % ------------------------------------------------------------------------ %
+    % ------------------------------------------------------------------------ %
+    \newpage % >>> ------------------------------------------------------- <<< % 
+    % ------------------------------------------------------------------------ %
+    % ------------------------------------------------------------------------ %
+    % ------------------------------------------------------------------------ %
+    % ------------------------------------------------------------------------ %
+    % ------------------------------------------------------------------------ %
+    % ------------------------------------------------------------------------ %
+    % ------------------------------------------------------------------------ %
+    % ------------------------------------------------------------------------ %
+    % ------------------------------------------------------------------------ %
+    % ------------------------------------------------------------------------ %
+    % ------------------------------------------------------------------------ %
+    % ------------------------------------------------------------------------ %
+    % ------------------------------------------------------------------------ %
+    % ------------------------------------------------------------------------ %
+    % ------------------------------------------------------------------------ %
+    % ------------------------------------------------------------------------ %
+
+    \begin{align*}
+        c_{wheel}\, &=\, \frac{360^{\circ}}{2\pi r}\, \longrightarrow\, \text{degrees to move one unit} \\
+        c_{wheel}\, &=\, \frac{360^{\circ}}{\pi \cdot 49.5\, \text{mm}}\, \approx\, 2.314^{\circ}\, \longrightarrow\, \text{for our wheels} \\
+    \end{align*}
+
+    \begin{align*}    
+        d_{unit}\, &=\, \text{distance in the unit of measurement} \\
+        d_{degrees}\, &=\, d_{unit}\, \cdot\, c_{wheel}\, \longrightarrow\, \text{transformed distance} \\
+    \end{align*}
+    
+    \bigbreak % ------------------------------------------------------------------------ %
+    \hrule % --------------------------------------------------------------------------- %
+    \bigbreak % ------------------------------------------------------------------------ %
+
+    \begin{align*}
+        s_{degrees}\, &=\, \textstyle\text{the speed of one wheel in $\frac{\text{degrees}}{\text{$1$ second}}$} \\
+        d_{wheels}\, &=\, \text{distance between the wheels}  \\
+    \end{align*}
+
+    \[d_{path-wheels}\, =\, \frac{2\pi\, \cdot\, d_{wheels}}{360^{\circ}}\, \longrightarrow\, \text{distance to rotate $1$ degree}\] 
+    \[d_{speed}\, =\, d_{path-wheels}\, \cdot\, s_{degrees}\, \longrightarrow\, \text{distance to rotate with the desired speed}\]
+    
+    % bla bla bla %
+    \[\rightarrow\, \left\langle \begin{array}{c}
+        \text{now we know the necessary distance to move per second,} \\
+        \text{so we need to transform $d_{speed}$ into motor speed} \\
+        \text{(using the formulas from moving forwards and backwards)} \\
+    \end{array}\, \right\rangle \leftarrow\]
+
+    \[s_{wheel}\, =\, d_{speed}\, \cdot\, c_{wheel}\, \longrightarrow\, \text{the final speed of the motor :D}\]
+
+    \bigbreak % ------------------------------------------------------------------------ %
+    \hrule % --------------------------------------------------------------------------- %
+    \bigbreak % ------------------------------------------------------------------------ %
+
+    \begin{align*}
+        \text{motor.stalled()}\, &=\, \textbf{true}\, \Leftrightarrow\, (\text{motor.position()} - \text{lastt}_{\text{position}} < \text{threshold}) \\
+        \text{motor.stalled()}\, &=\, \text{check if the motor has stalled $-$ can't move} \\
+        \text{lastt}_{\text{position}}\, &=\, \text{motor.position()}\, \rightarrow\, \text{updated after the check} \\
+    \end{align*}
+    \[\rightarrow\, \text{check if a motor is stalled}\, \leftarrow\]
+ 
+    \bigbreak % ------------------------------------------------------------------------ %
+    \hrule % --------------------------------------------------------------------------- %
+    \bigbreak % ------------------------------------------------------------------------ %
+
+    % --------------------------------------------------------------------------- %
+
+    % ------------------------------------------------------------------------ %
+    % ------------------------------------------------------------------------ %
+    % ------------------------------------------------------------------------ %
+    % ------------------------------------------------------------------------ %
+    % ------------------------------------------------------------------------ %
+    % ------------------------------------------------------------------------ %
+    % ------------------------------------------------------------------------ %
+    % ------------------------------------------------------------------------ %
+    % ------------------------------------------------------------------------ %
+    % ------------------------------------------------------------------------ %
+    % ------------------------------------------------------------------------ %
+    % ------------------------------------------------------------------------ %
+    % ------------------------------------------------------------------------ %
+    % ------------------------------------------------------------------------ %
+    % ------------------------------------------------------------------------ %
+    % ------------------------------------------------------------------------ %
+    \newpage % >>> ------------------------------------------------------- <<< % 
+    % ------------------------------------------------------------------------ %
+    % ------------------------------------------------------------------------ %
+    % ------------------------------------------------------------------------ %
+    % ------------------------------------------------------------------------ %
+    % ------------------------------------------------------------------------ %
+    % ------------------------------------------------------------------------ %
+    % ------------------------------------------------------------------------ %
+    % ------------------------------------------------------------------------ %
+    % ------------------------------------------------------------------------ %
+    % ------------------------------------------------------------------------ %
+    % ------------------------------------------------------------------------ %
+    % ------------------------------------------------------------------------ %
+    % ------------------------------------------------------------------------ %
+    % ------------------------------------------------------------------------ %
+    % ------------------------------------------------------------------------ %
+    % ------------------------------------------------------------------------ %
+
+    % ---> define colors for workflows <--- #
+    \definecolor{innerarrowred}{HTML}{CE2626}
+    \definecolor{outerarrowred}{HTML}{9AB17A}
+
+    \captionsetup{labelformat=empty}
+
+    \begin{figure}[htbp]
+        \centering
+
+        \begin{subfigure}[b]{0.45\textwidth}
+            \centering
+            \begin{tikzpicture}[scale=1]
+
+                % ---> draw the circles and the arrow pointing that it is slipping <--- %
+                \draw[thick] (0, 0) circle (1); 
+                \draw[thick, decorate, decoration = {zigzag, amplitude = 0.5pt, segment length = 10pt}] (0, 0) circle (1.75); 
+                \draw[->, thick, innerarrowred] (45:1.15) arc (45:320:1.15);
+
+                % ---> draw the cross in the middle <--- %
+                \draw[thick, densely dashed] (0, 0) -- (45:0.5);
+                \draw[thick, densely dashed] (0, 0) -- (135:0.5);
+                \draw[thick, densely dashed] (0, 0) -- (225:0.5);
+                \draw[thick, densely dashed] (0, 0) -- (315:0.5);
+
+                % ---> draw the arrows to indicate that the wheel stays in place <--- %
+                \draw[<->, thick] (-1.325, -1.772) -- (1.325, -1.772);
+
+                % ---> caption with small details (profesional) <--- %
+                \node[text = gray!70, font = \small\itshape, align = center, text width = 5cm, below = 6pt of current bounding box.south] 
+                    {The inner axle can slip, while the outer tire stays in place.};
+
+            \end{tikzpicture}
+        \end{subfigure}
+        \hfill % must not have enter 
+        \begin{subfigure}[b]{0.45\textwidth}
+            \centering
+            \begin{tikzpicture}[scale=1]
+
+                % ---> draw the circles and the arrow pointing that it is slipping <--- %
+                \draw[thick] (0, 0) circle (1); 
+                \draw[thick, decorate, decoration = {zigzag, amplitude = 0.5pt, segment length = 10pt}] (0, 0) circle (1.75); 
+                \draw[->, thick, outerarrowred] (45:1.57) arc (45:320:1.57);
+
+                % ---> draw the cross in the middle <--- %
+                \draw[thick, densely dashed] (0, 0) -- (45:0.5);
+                \draw[thick, densely dashed] (0, 0) -- (135:0.5);
+                \draw[thick, densely dashed] (0, 0) -- (225:0.5);
+                \draw[thick, densely dashed] (0, 0) -- (315:0.5);
+
+                % ---> draw the arrows to indicate that the wheel stays in place <--- %
+                \draw[<->, thick, densely dotted] (-1.325, -1.772) -- (1.325, -1.772);
+
+                % ---> caption with small details (profesional) <--- %
+                \node[text = gray!70, font = \small\itshape, align = center, text width = 5cm, below = 6pt of current bounding box.south] 
+                    {The outer tire can slip / stay in place, along with the inner axle.};
+
+            \end{tikzpicture}
+        \end{subfigure}
+
+        \caption{$\longrightarrow$ The two ways the wheels may lock in case of a collision. $\longleftarrow$}
+
+    \end{figure}
+
+    % ---------------------------------------------------------------------------------- %
+    % ---------------------------------------------------------------------------------- %
+    % ---------------------------------------------------------------------------------- %
+    % ---------------------------------------------------------------------------------- %
+    % ---------------------------------------------------------------------------------- %
+    \bigbreak % ------------------------------------------------------------------------ %
+    \bigbreak % ------------------------------------------------------------------------ %
+    \hrule % --------------------------------------------------------------------------- %
+    \bigbreak % ------------------------------------------------------------------------ %
+    \bigbreak % ------------------------------------------------------------------------ %
+    % ---------------------------------------------------------------------------------- %
+    % ---------------------------------------------------------------------------------- %
+    % ---------------------------------------------------------------------------------- %
+    % ---------------------------------------------------------------------------------- %
+    % ---------------------------------------------------------------------------------- %
+    
+    \tikzset{robotsketch/.pic={
+        \path[use as bounding box] (-2, -2) rectangle (2, 2);
+        \draw[line width = 0.8pt, rounded corners = 3pt, fill = white] (-1, -1) rectangle (1, 1);
+        \fill[rounded corners = 2pt, fill = gray!15] (0.4, -0.3) rectangle (0.8, 0.3);
+        \fill[rounded corners = 2pt, fill = gray!15] (-0.8, -0.3) rectangle (-0.4, 0.3);        
+    }}  
+
+    \begin{tikzpicture}
+        \matrix (m) [column sep = .6cm, row sep = .4cm, nodes in empty cells]{            
+
+            \node(a11){type of turn}; &
+            \node(a12){spin turn}; &
+            \node(a13){right wheel turn}; &
+            \node(a14){left wheel turn}; \\
+
+            \node(a21){turn left : }; 
+            & % ------------------------------------------------- %
+            % --------------------------------------------------- %
+            % --------------------------------------------------- %
+            % --------------------------------------------------- %
+            {\pic[scale = 0.5]{robotsketch}; % ---> draw a cute little sketch <--- %
+            \draw[scale = 0.5, ->, line width = 0.9pt] (0:1.75cm) arc(0:90:1.75cm);
+            \draw[scale = 0.5, ->, line width = 0.9pt] (180:1.75cm) arc(180:270:1.75cm);}
+            & % ------------------------------------------------- %
+            % --------------------------------------------------- %
+            % --------------------------------------------------- %
+            % --------------------------------------------------- %
+            {\pic[scale = 0.5]{robotsketch}; % ---> draw a cute little sketch <--- %
+            \draw[scale = 0.5, ->, line width = 0.9pt] (0:1.75cm) arc(0:90:1.75cm);}
+            & % ------------------------------------------------- %
+            % --------------------------------------------------- %
+            % --------------------------------------------------- %
+            % --------------------------------------------------- %
+            {\pic[scale = 0.5]{robotsketch}; % ---> draw a cute little sketch <--- %
+            \draw[scale = 0.5, ->, line width = 0.9pt] (180:1.75cm) arc(180:270:1.75cm);}
+            \\ % ------------------------------------------------ %
+            % --------------------------------------------------- %
+            % --------------------------------------------------- %
+            % --------------------------------------------------- %
+            % --------------------------------------------------- %
+            % >>>>>>>>>>>>>>>>>>>>>>>> - <<<<<<<<<<<<<<<<<<<<<<<< %
+            % --------------------------------------------------- %
+            % --------------------------------------------------- %
+            % --------------------------------------------------- %
+            % --------------------------------------------------- %
+            \node(a31){turn right : }; 
+            & % ------------------------------------------------- %
+            % --------------------------------------------------- %
+            % --------------------------------------------------- %
+            % --------------------------------------------------- %
+            {\pic[scale = 0.5]{robotsketch}; % ---> draw a cute little sketch <--- %
+            \draw[scale = 0.5, ->, line width = 0.9pt] (0:1.75cm) arc(0:-90:1.75cm);
+            \draw[scale = 0.5, ->, line width = 0.9pt] (180:1.75cm) arc(-180:-270:1.75cm);}  
+            & % ------------------------------------------------- %
+            % --------------------------------------------------- %
+            % --------------------------------------------------- %
+            % --------------------------------------------------- %
+            {\pic[scale = 0.5]{robotsketch}; % ---> draw a cute little sketch <--- %
+            \draw[scale = 0.5, ->, line width = 0.9pt] (0:1.75cm) arc(0:-90:1.75cm);}
+            & % ------------------------------------------------- %
+            % --------------------------------------------------- %
+            % --------------------------------------------------- %
+            % --------------------------------------------------- %
+            {\pic[scale = 0.5]{robotsketch}; % ---> draw a cute little sketch <--- %
+            \draw[scale = 0.5, ->, line width = 0.9pt] (180:1.75cm) arc(-180:-270:1.75cm);}
+            \\ % ------------------------------------------------ %
+        };
+        % draw my beautiful lines %
+        \draw[line width = 0.8pt] ([yshift = -3pt]a11.south west) -- ([yshift = -3pt]a14.south east);
+        \draw[line width = 0.8pt] ([xshift = 3pt]a11.north east) -- ([xshift = 3pt, yshift = -24pt]a11.north east |- a31.south east);
+        
+    \end{tikzpicture}
+
+    % ------------------------------------------------------------------------ %
+    % ------------------------------------------------------------------------ %
+    % ------------------------------------------------------------------------ %
+    % ------------------------------------------------------------------------ %
+    % ------------------------------------------------------------------------ %
+    % ------------------------------------------------------------------------ %
+    % ------------------------------------------------------------------------ %
+    % ------------------------------------------------------------------------ %
+    % ------------------------------------------------------------------------ %
+    % ------------------------------------------------------------------------ %
+    % ------------------------------------------------------------------------ %
+    % ------------------------------------------------------------------------ %
+    % ------------------------------------------------------------------------ %
+    % ------------------------------------------------------------------------ %
+    % ------------------------------------------------------------------------ %
+    % ------------------------------------------------------------------------ %
+    \newpage % >>> ------------------------------------------------------- <<< % 
+    % ------------------------------------------------------------------------ %
+    % ------------------------------------------------------------------------ %
+    % ------------------------------------------------------------------------ %
+    % ------------------------------------------------------------------------ %
+    % ------------------------------------------------------------------------ %
+    % ------------------------------------------------------------------------ %
+    % ------------------------------------------------------------------------ %
+    % ------------------------------------------------------------------------ %
+    % ------------------------------------------------------------------------ %
+    % ------------------------------------------------------------------------ %
+    % ------------------------------------------------------------------------ %
+    % ------------------------------------------------------------------------ %
+    % ------------------------------------------------------------------------ %
+    % ------------------------------------------------------------------------ %
+    % ------------------------------------------------------------------------ %
+    % ------------------------------------------------------------------------ %
+
+    % ---> define colors for paths <--- %
+    \definecolor{lightgreenpoint}{HTML}{609966}
+    \definecolor{lightgreenpath}{HTML}{9dc08b}
+
+    \definecolor{lightbluepoint}{HTML}{2E4F4F}
+    \definecolor{lightbluepath}{HTML}{0E8388}    
+
+    \definecolor{lightredpoint}{HTML}{d02752}
+    \definecolor{lightredpath}{HTML}{f63049}
+    
+    % ---> color paths and potential ones <--- %
+    \pgfdeclarelayer{linesbackground}
+    \pgfdeclarelayer{pointsbackground}
+    \pgfsetlayers{linesbackground,pointsbackground,main}
+
+    \begin{figure}[htbp]
+        \centering        
+
+        % figure one %
+        \begin{tikzpicture}[scale = 0.75]
+            \coordinate (P) at (0, 0); % define point
+            \coordinate (D) at (0, 0); % define point
+            \def\dir{0} % direction in degrees
+            
+            \pic[scale = 0.3, rotate = -60]{robotsketch};
+
+            % \begin{pgfonlayer}{background}
+            \foreach \i/\anglee/\distancee/\offsetx/\offsety in {
+                1/30/2/0/0.2,
+                2/15/2.2/-.1/-.1,
+                3/-30/5/0/0.1,
+                4/45/1/0/0,
+                5/16/3/0/0.22,
+                6/30/2/-0.1/-0.1
+            }{
+                \pgfmathsetmacro{\dir}{\dir + \anglee} % update direction :)
+                
+                \path (P) -- ++(\dir:\distancee) coordinate (Pnew); 
+                \coordinate (Dnew) at ($(Pnew) + (\offsetx, \offsety)$);
+                
+                \begin{pgfonlayer}{linesbackground}
+                    \draw[-, line width = 1.25pt, lightgreenpath] (P) -- (Pnew);
+                    % \draw[-, line width = 1.25pt, lightbluepath] (D) -- (Dnew);
+                \end{pgfonlayer}
+
+                \coordinate (P) at (Pnew); 
+                \coordinate (D) at (Dnew); 
+
+                \begin{pgfonlayer}{pointsbackground}
+                    \node at (P) [circle, fill = lightgreenpoint, inner sep = 1.5pt] {};
+                    % \node at (D) [circle, fill = lightbluepoint, inner sep = 1.5pt] {};
+                \end{pgfonlayer}        
+            }
+            % \end{pgfonlayer}
+
+        \end{tikzpicture}
+        \caption{Figure 1: Desired robot path (virtual angle preprocessing).}
+
+        % ------------------------------------------------------------------------ %
+        % ------------------------------------------------------------------------ %
+        % ------------------------------------------------------------------------ %
+        \vspace{32pt} % ----------------------------------------------------------- %
+        % ------------------------------------------------------------------------ %
+        % ------------------------------------------------------------------------ %
+        % ------------------------------------------------------------------------ %
+
+        % figure two %
+        \begin{tikzpicture}[scale = 0.75]
+            \coordinate (P) at (0, 0); % define point
+            \coordinate (D) at (0, 0); % define point
+            \def\dir{0} % direction in degrees
+            
+            \pic[scale = 0.3, rotate = -60]{robotsketch};
+
+            % \begin{pgfonlayer}{background}
+            \foreach \i/\anglee/\distancee/\offsetx/\offsety in {
+                1/30/2/0/0.3,
+                2/15/2.2/-.1/0.2,
+                3/-30/5/-0.16/0.3,
+                4/45/1/0/0.2,
+                5/16/3/0/-0.12,
+                6/30/2/-0.1/-0.25
+            }{
+                \pgfmathsetmacro{\dir}{\dir + \anglee} % update direction :)
+                
+                \path (P) -- ++(\dir:\distancee) coordinate (Pnew); 
+                \coordinate (Dnew) at ($(Pnew) + (\offsetx, \offsety)$);
+                
+                \begin{pgfonlayer}{linesbackground}
+                    \draw[-, line width = 1.25pt, lightgreenpath] (P) -- (Pnew);
+                    \draw[-, line width = 1.25pt, lightredpath] (D) -- (Dnew);
+                \end{pgfonlayer}
+
+                \coordinate (P) at (Pnew); 
+                \coordinate (D) at (Dnew); 
+
+                \begin{pgfonlayer}{pointsbackground}
+                    \node at (P) [circle, fill = lightgreenpoint, inner sep = 1.5pt] {};
+                    \node at (D) [circle, fill = lightredpoint, inner sep = 1.5pt] {};
+                \end{pgfonlayer}        
+            }
+            % \end{pgfonlayer}
+
+        \end{tikzpicture}
+        \caption{Figure 2: Actual robot path (no virtual angle optimization).}
+
+        % ------------------------------------------------------------------------ %
+        % ------------------------------------------------------------------------ %
+        % ------------------------------------------------------------------------ %
+        \vspace{32pt} % ----------------------------------------------------------- %
+        % ------------------------------------------------------------------------ %
+        % ------------------------------------------------------------------------ %
+        % ------------------------------------------------------------------------ %
+
+        % figure three %
+        \begin{tikzpicture}[scale = 0.75]
+            \coordinate (P) at (0, 0); % define point
+            \coordinate (D) at (0, 0); % define point
+            \def\dir{0} % direction in degrees
+            
+            \pic[scale = 0.3, rotate = -60]{robotsketch};
+
+            % \begin{pgfonlayer}{background}
+            \foreach \i/\anglee/\distancee/\offsetx/\offsety in {
+                1/30/2/0/0.2,
+                2/15/2.2/-.1/-.1,
+                3/-30/5/0/0.1,
+                4/45/1/0/0,
+                5/16/3/0/0.22,
+                6/30/2/-0.1/-0.1
+            }{
+                \pgfmathsetmacro{\dir}{\dir + \anglee} % update direction :)
+                
+                \path (P) -- ++(\dir:\distancee) coordinate (Pnew); 
+                \coordinate (Dnew) at ($(Pnew) + (\offsetx, \offsety)$);
+                
+                \begin{pgfonlayer}{linesbackground}
+                    \draw[-, line width = 1.25pt, lightgreenpath] (P) -- (Pnew);
+                    \draw[-, line width = 1.25pt, lightbluepath] (D) -- (Dnew);
+                \end{pgfonlayer}
+
+                \coordinate (P) at (Pnew); 
+                \coordinate (D) at (Dnew); 
+
+                \begin{pgfonlayer}{pointsbackground}
+                    \node at (P) [circle, fill = lightgreenpoint, inner sep = 1.5pt] {};
+                    \node at (D) [circle, fill = lightbluepoint, inner sep = 1.5pt] {};
+                \end{pgfonlayer}        
+            }
+            % \end{pgfonlayer}
+
+        \end{tikzpicture}
+        \caption{Figure 3: Updated robot path (with virtual angle).}
+    \end{figure}
+
+\end{document}
