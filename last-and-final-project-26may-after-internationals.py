@@ -60,7 +60,7 @@ class PID_Controller(object):
         return None
 
     def setconstants(self, dkp: int, dkd: int, dki: int, deadzone: int = 5, alphanoise: int = 625) -> None:
-        self.__initvalues__(); self.kp = dkp; self.kd = dkd; self.ki = dki; self.deadzone = deadzone; self.alpha = alphanoise; self.__initvalues__(); return None
+        self.kp = dkp; self.kd = dkd; self.ki = dki; self.deadzone = deadzone; self.alpha = alphanoise; self.__initvalues__(); return None
     
     def noisefiltering(self) -> None:
         self.errorsmooth = (self.alpha * self.error + (__constantscale - self.alpha) * self.errorsmooth) // __constantscale
@@ -73,7 +73,7 @@ class PID_Controller(object):
         self.error = limitint(self.error, self.lasterror - self.maxchange, self.lasterror + self.maxchange)
 
         self.noisefiltering() # ---> Filter errors and noise from the input <---
-        # self.gradientascent() # ---> Tune the constants according to the gradient ascent algorithm <---
+        # self.gradientascent() # ---> Tune the constants according to the gradient ascent algorithm <--- (nah)
 
         self.proportional = self.error
         self.derivative = (self.error - self.lasterror)
@@ -189,25 +189,14 @@ class DriveBase_Controller(object):
         speed = (self.circumferencerobot * speedangle // 360) 
         speed = self.getdistance(speed)
         return int(speed)
-
-    def computespeedmx(self, speed: int) -> int:
-        if(speed == 0): return 0; 
-
-        if(speed < 0): return limitint(speed, -self.maxspeed, -self.minspeed)
-        elif(speed > 0): return limitint(speed, self.minspeed, self.maxspeed)
-
-    def computeturnsigns(self, samesign: bool = 0) -> None:
-        if(samesign):
-            self.lfsign = myabs(self.lfsign) * (-1 if self.getangle() > self.targetangle else 1)
-            self.rgsign = myabs(self.rgsign) * (-1 if self.getangle() > self.targetangle else 1)
-            return;
-        
+    
+    def computeturnsigns(self) -> None:    
         self.lfsign = myabs(self.lfsign) * (-1 if self.getangle() > self.targetangle else  1)
         self.rgsign = myabs(self.rgsign) * ( 1 if self.getangle() > self.targetangle else -1)
 
     # -------------------------> Here comes the big boi (the real and based functions) <------------------------- #
 
-    async def gyroforwards(self, distance: int, speed1: int, typestop, offsetlf: int = 0, offsetrg: int = 0, initpid: int = 0, initgyro: int = 0, typeemsk: int = 0) -> None:
+    async def gyroforwards(self, distance: int, speed1: int, typestop, offsetlf: int = 0, offsetrg: int = 0, initpid: int = 0, initgyro: int = 0) -> None:
 
         if(typestop == None): print("Typestop: NULL .~.\n")
 
@@ -246,7 +235,7 @@ class DriveBase_Controller(object):
 
         return None
     
-    async def gyrobackwards(self, distance: int, speed1: int, typestop, offsetlf: int = 0, offsetrg: int = 0, initpid: int = 0, initgyro: int = 0, typeemsk: int = 0) -> None:
+    async def gyrobackwards(self, distance: int, speed1: int, typestop, offsetlf: int = 0, offsetrg: int = 0, initpid: int = 0, initgyro: int = 0) -> None:
 
         if(typestop == None): print("Typestop: NULL .~.\n")
 
@@ -255,8 +244,8 @@ class DriveBase_Controller(object):
         # ---> Parameters initialization <--- #
         self.distance = 2 * self.getdistance(distance); 
         self.speedinit = min(self.maxspeed, max(self.minspeed, speed1)); 
-
-        # ---> Reset PID Values after some time <--- #
+        
+        # ---> Reset PID Values after some time / after alligning to a mission <--- #
         if(initpid): self.PID.__initvalues__()
         if(initgyro): self.targetangle = int(self.gyro.heading())
 
@@ -285,31 +274,29 @@ class DriveBase_Controller(object):
 
         return None
 
-    async def turnleftt(self, angle: int, speedangle: int, *, lfsign: int = -1, rgsign: int = 1, lfdiv: int = 1, rgdiv: int = 1, typestop, lowerspeedbound: int = 45) -> None:
+    async def turnleftt(self, angle: int, speedangle: int, *, lfsign: int = -1, rgsign: int = 1, typestop) -> None:
 
         if(typestop == None): print("Typestop: NULL .~.\n")
 
-        # ---> Recommended speed angle E {75, 225}, angle = 160 <---
-        speedangle = limitint(speedangle, lowerspeedbound, __maxint) # ---> Too small -> setpoint ramping = 0 <---
+        # ---> Recommended speed angle E {75, 225}, angle = 160 (if we have speed angle we can use this for setpoint ramping - different concept for pid) <---
         self.speed = self.computeturnspeed(speedangle) // ((lfsign != 0) + (rgsign != 0))
+        self.speed = limitint(self.speed, self.minspeed, self.maxspeed); 
 
         # ---> Compute wheels directions <--- #
         angle = -myabs(angle); self.targetangle += angle; 
-        self.lfsign = lfsign; self.rgsign = rgsign;
-        samesign: bool = bool((lfsign > 0 and rgsign > 0) or (lfsign < 0 and rgsign < 0));
+        self.lfsign = lfsign; self.rgsign = rgsign; 
 
         await wait(__ttimeset); # wait x ms to set values
 
         # ---> Problem - Not stopping if it overshoots <--- #
         while(not inrange(self.getangle(), self.targetangle - self.epsilon, self.targetangle + self.epsilon)):
 
-            # ---> Change speed to slow down <--- #
             if(inrange(self.getangle(), self.targetangle - self.epsilonlowwspeed, self.targetangle + self.epsilonlowwspeed)):
-                self.speed = min(self.speed, self.mingoodspeed)
+                self.speed = min(self.speed, self.mingoodspeed); # simple for improving precision #
 
-            self.computeturnsigns(samesign) # Switch turn signs in case of overshooting
-            self.lfspeed = self.computespeedmx(self.lfsign * self.speed) // lfdiv
-            self.rgspeed = self.computespeedmx(self.rgsign * self.speed) // rgdiv
+            self.computeturnsigns() # Switch turn signs in case of overshooting
+            self.lfspeed = self.lfsign * self.speed; 
+            self.rgspeed = self.rgsign * self.speed; 
     
             self.movetank(self.lfspeed, self.rgspeed) 
         
@@ -319,30 +306,28 @@ class DriveBase_Controller(object):
 
         return None
 
-    async def turnrightt(self, angle: int, speedangle: int, *, lfsign: int = 1, rgsign: int = -1, lfdiv: int = 1, rgdiv: int = 1, typestop, lowerspeedbound: int = 45) -> None:
+    async def turnrightt(self, angle: int, speedangle: int, *, lfsign: int = 1, rgsign: int = -1, typestop) -> None:
 
         if(typestop == None): print("Typestop: NULL .~.\n")
 
         # ---> Recommended speed angle E {75, 225}, angle = 160 <---
-        speedangle = limitint(speedangle, lowerspeedbound, __maxint) # ---> Too small -> setpoint ramping = 0 <---
         self.speed = self.computeturnspeed(speedangle) // ((lfsign != 0) + (rgsign != 0))
+        self.speed = limitint(self.speed, self.minspeed, self.maxspeed); 
 
         # ---> Compute wheels directions <--- #
         angle = myabs(angle); self.targetangle += angle; 
         self.lfsign = lfsign; self.rgsign = rgsign;       
-        samesign: bool = bool((lfsign > 0 and rgsign > 0) or (lfsign < 0 and rgsign < 0));
 
         await wait(__ttimeset); # wait x ms to set values
 
         while(not inrange(self.getangle(), self.targetangle - self.epsilon, self.targetangle + self.epsilon)):
 
-            # ---> Change speed to slow down <--- #
             if(inrange(self.getangle(), self.targetangle - self.epsilonlowwspeed, self.targetangle + self.epsilonlowwspeed)):
-                self.speed = min(self.speed, self.mingoodspeed)
+                self.speed = min(self.speed, self.mingoodspeed); # simple for improving precision #
 
-            self.computeturnsigns(samesign) # Switch turn signs in case of overshooting
-            self.lfspeed = self.computespeedmx(self.lfsign * self.speed) // lfdiv
-            self.rgspeed = self.computespeedmx(self.rgsign * self.speed) // rgdiv
+            self.computeturnsigns() # Switch turn signs in case of overshooting
+            self.lfspeed = self.lfsign * self.speed; 
+            self.rgspeed = self.rgsign * self.speed; 
     
             self.movetank(self.lfspeed, self.rgspeed) 
         
@@ -382,15 +367,10 @@ mydrivebase = DriveBase_Controller(
 #     distbetweenwheel = 112, wheelcircumference = 176
 # )
 
-# Motor Port A = rg db wheel
-# Motor Port B = lf sys wheel
-# Motor Port E = lf db sheel
-# Motor Port F = rg sys wheel
-
 class runmethods(object):
     def __init__(self): return None
     
-    # ---> template: mydrivebase.trytimelimit(lambda: mydrivebase.syslefttmotor.run_angle(1000, 325), 2000, lambda: mydrivebase.sysrighttmotor.hold()) <---
+    # ---> template: mydrivebase.trytimelimit(lambda: mydrivebase.sysmotorr.run_angle(-, -), ttimelimit, lambda: mydrivebase.sysmotorr.hold()) <---
 
     async def waituserinput(self): 
 
@@ -406,248 +386,18 @@ class runmethods(object):
 
     async def runk1(self): 
         
-        mydrivebase.PID.setconstants(1750, 1200, 1, alphanoise = 1000, deadzone = 0); await wait(200)
+        # ---> all parameters are explained in the tehnical notebook <--- #
+        # mydrivebase.PID.setconstants(kp, kd, ki, alphanoise = -, deadzone = -); await wait(200)
         
         # ------------------------------------------------------------------------------------------ #
 
-        mydrivebase.sysrighttmotor.run_angle(250, -25); # -50 init, -325 lift, 625 lower
-
-        await mydrivebase.gyroforwards(12, 1100, typestop = mydrivebase.braketank, initpid = 1); await wait(250)
-
-        # ---> old 728 too low because it hit the mission and it couldn't go through <--- #
-        await mydrivebase.gyrobackwards(742, 625, typestop = mydrivebase.braketank, initpid = 1); await wait(250)
         
-        mydrivebase.sysrighttmotor.run_angle(750, 475); # -50 init, -325 lift, 625 lower
-        await mydrivebase.turnleftt(90, 47, lfsign = -1, rgsign = 1, typestop = mydrivebase.braketank, lowerspeedbound = 45); await wait(250)
-
-        # ---> reached mission <--- #
-        await mydrivebase.gyroforwards(165, 225, typestop = mydrivebase.braketank, initpid = 0)
-        
-        mydrivebase.syslefttmotor.run_angle(1100, -550); # collect
-        await mydrivebase.sysrighttmotor.run_angle(300, -425); await wait(250) # -50 init, -325 lift, 625 lower     
-    
-        await mydrivebase.__initrun__(); # i want to reset the angle to zero (relative angle perpendicular to the mission)
-        await mydrivebase.gyrobackwards(105, 975, typestop = mydrivebase.braketank, initpid = 0); await wait(250)
-        
-        # ---> complete the sharky in the middle <--- #
-        await mydrivebase.turnrightt(45, 36, lfsign = 1, rgsign = 0, typestop = mydrivebase.braketank, lowerspeedbound = 32); await wait(250)
-
-        mydrivebase.sysrighttmotor.run_angle(1100, 475); # -50 init, -325 lift, 625 lower
-        await mydrivebase.gyroforwards(280, 825, typestop = mydrivebase.braketank, initpid = 1, offsetlf = 55); await wait(250)
-        
-        await multitask(
-            mydrivebase.trytimelimit(lambda: mydrivebase.sysrighttmotor.run_angle(275, -232), 3000, typestop = mydrivebase.sysrighttmotor.hold),# ---> if we have a bad run and can't complete the shark we will get tle and exit :D <--- #
-            delayfunction(750, lambda: mydrivebase.trytimelimit(lambda: mydrivebase.turnleftt(20, 32, lfsign = -1, rgsign = 1, typestop = mydrivebase.braketank, lowerspeedbound = 32), 1500, mydrivebase.braketank))
-        ); await wait(500); # wait one second to stabilize the shark ;)
-
-        # ---> return to the base <--- #
-        await mydrivebase.gyrobackwards(275, 1100, offsetlf = -100, typestop = mydrivebase.braketank, initpid = 0); await wait(250)
-        await mydrivebase.turnrightt(75, 45, lfsign = 1, rgsign = -1, typestop = mydrivebase.braketank); await wait(250)
-
-        await mydrivebase.gyroforwards(750, 1100, typestop = mydrivebase.braketank, initpid = 0, offsetrg = -200); await wait(250)
 
         # ------------------------------------------------------------------------------------------ #
         
         return None
-                                                         
-    async def runk2(self): 
-        
-        mydrivebase.PID.setconstants(1750, 0, 2, alphanoise = 1000, deadzone = 0); await wait(200)
-        
-        # --------------------------------------------------------------------------------------- #
 
-        mydrivebase.syslefttmotor.run_angle(750, -750); # init arm
-        
-        await multitask( # before dist 715, now 708 (blind modification) #        
-            mydrivebase.gyroforwards(695, 675, typestop = mydrivebase.braketank, initpid = 1), 
-            delayfunction(500, lambda: mydrivebase.sysrighttmotor.run_angle(1100, -150))
-        ); await wait(250)
-        
-        await mydrivebase.turnleftt(49, 32, lfsign = 0, rgsign = 1, typestop = mydrivebase.braketank); await wait(250);
-        
-        await mydrivebase.sysrighttmotor.run_angle(1100, +165); await wait(200); # force motor
-    
-        # ---> go to elements <--- #
-        await mydrivebase.gyroforwards(230, 925, typestop = None, initpid = 0); await wait(250); # viata si sufletul meu :| #
-        await mydrivebase.sysrighttmotor.run_angle(1100, -150); # lift arm
-    
-        await mydrivebase.gyrobackwards(215, 475, typestop = mydrivebase.braketank, initpid = 1); await wait(250)   
-        await mydrivebase.gyroforwards(150, 675, typestop = mydrivebase.braketank, initpid = 0); await wait(250)
-
-        # await mydrivebase.syslefttmotor.run_angle(400, +400); await wait(250)
-        await mydrivebase.trytimelimit(lambda: mydrivebase.syslefttmotor.run_angle(400, 400), 1250, lambda: mydrivebase.syslefttmotor.hold()); await wait(250)
-
-        await mydrivebase.gyrobackwards(5, 250, typestop = mydrivebase.braketank, initpid = 0); await wait(250)   
-        await mydrivebase.turnrightt(48, 38, lfsign = 1, rgsign = -1, typestop = mydrivebase.braketank, lowerspeedbound = 38); await wait(250)
-        await mydrivebase.gyrobackwards(750, 1100, offsetlf = -175, typestop = mydrivebase.braketank, initpid = 0); await wait(250)   
-
-        # --------------------------------------------------------------------------------------- #
-
-        return None
-        
-    async def runk3(self):
-    
-        mydrivebase.PID.setconstants(200, 0, 1); await wait(250)
-
-        # ------------------------------------------------------------------------------------------ #
-
-        mydrivebase.sysrighttmotor.run_angle(250, 30)
-        await mydrivebase.gyroforwards(360, 1100, typestop = None, initpid = 1)
-        mydrivebase.sysrighttmotor.run_angle(1100, -140)
-        await mydrivebase.gyrobackwards(400, 1100, typestop = mydrivebase.braketank, offsetlf = 32, initpid = 0)
-        
-        return None
-
-    async def runk4(self): 
-
-        mydrivebase.PID.setconstants(2250, 1600, 0, alphanoise = 1000, deadzone = 0); await wait(200)
-
-        # ------------------------------------------------------------------------------------------ #
-
-        await mydrivebase.gyroforwards(70, 525, typestop = mydrivebase.braketank, initpid = 1); await wait(500)
-        await mydrivebase.turnrightt(83, 38, lfsign = 0, rgsign = -1, typestop = mydrivebase.braketank, lowerspeedbound = 0); await wait(250)
-        await mydrivebase.gyroforwards(825, 825, typestop = mydrivebase.braketank, initpid = 1); await wait(500)
-
-        # ---> go to the mission <--- #
-        await mydrivebase.turnrightt(95, 50, lfsign = 1, rgsign = 0, typestop = mydrivebase.braketank); await wait(250)
-        
-        mydrivebase.sysrighttmotor.run(-275); # rotate with a super small speed to allign even if they don't match :)
-        await mydrivebase.gyroforwards(200, 975, typestop = None, initpid = 0); # await wait(500)
-        
-        await mydrivebase.trytimelimit(lambda: mydrivebase.sysrighttmotor.run_angle(1100, -900), 1000, typestop = mydrivebase.sysrighttmotor.brake()); 
- 
-        await mydrivebase.gyrobackwards(270, 750, typestop = mydrivebase.braketank, initpid = 0); await wait(250)
-        await mydrivebase.gyroforwards(175, 1100, typestop = mydrivebase.braketank, initpid = 0); await wait(250)
-
-        await mydrivebase.turnleftt(60, 60, lfsign = 0, rgsign = 1, typestop = mydrivebase.braketank); await wait(250)
-        await mydrivebase.gyroforwards(750, 1100, typestop = mydrivebase.braketank, initpid = 1); await wait(250)
-
-        # ------------------------------------------------------------------------------------------ #
-
-        return None
-
-    async def runk5(self): # ---> Stones (needs a lot of tuning with the new sistem) <--- #
-        
-        mydrivebase.PID.setconstants(2250, 2500, 4, deadzone = 0, alphanoise = 1000); await wait(200)
-
-        # ------------------------------------------------------------------------------------------ # (finised)
-
-        mydrivebase.syslefttmotor.run_angle(1000, 200)
-        await mydrivebase.gyrobackwards(20, 625, typestop = mydrivebase.braketank, initpid = 1); await wait(200)
-        await mydrivebase.gyroforwards(210, 675, typestop = mydrivebase.braketank, initpid = 1, initgyro = 1); await wait(200)
-
-        await mydrivebase.turnleftt(20, 30, lfsign = 0, rgsign = 1, typestop = mydrivebase.braketank); await wait(250)
-            
-        await mydrivebase.gyroforwards(315, 775, typestop = mydrivebase.braketank, initpid = 0); await wait(250)
-        
-        await mydrivebase.turnrightt(66, 51, lfsign = 1, rgsign = 0, typestop = mydrivebase.braketank); await wait(250)
-
-        mydrivebase.sysrighttmotor.run_angle(1100, 1575); # lower long arm
-        mydrivebase.syslefttmotor.run_angle(1000, -325); await wait(250)
-        
-        # ---> lower long arm while moving forwards <--- #
-        await mydrivebase.gyroforwards(250, 280, typestop = mydrivebase.braketank, initpid = 0); await wait(250); 
-
-        mydrivebase.sysrighttmotor.reset_angle(0); # run target for relative angle
-        
-        await multitask(
-            mydrivebase.trytimelimit(lambda: mydrivebase.syslefttmotor.run_angle(1100, 370), 1000, lambda: mydrivebase.sysrighttmotor.hold()),
-            mydrivebase.trytimelimit(lambda: mydrivebase.sysrighttmotor.run_target(1100, -1775), 2500, None)
-        ); await wait(250)
-
-        mydrivebase.sysrighttmotor.run_target(1100, -1775);
-
-        await mydrivebase.gyrobackwards(125, 625, offsetrg = -100, typestop = mydrivebase.braketank, initpid = 1); await wait(250)
-
-        # ---> Retrieve to base <--- #
-        await mydrivebase.turnleftt(60, 75, lfsign = -1, rgsign = 0, typestop = mydrivebase.braketank); await wait(250)
-        await mydrivebase.gyrobackwards(650, 1100, offsetrg = -250, typestop = mydrivebase.braketank, initpid = 0); await wait(250)
-
-        # ------------------------------------------------------------------------------------------ #
-
-        return None
-
-    async def runk6(self): # ---> misiune distrusa <--- # (swapped with runkx with stones (next one)) 
-
-        mydrivebase.PID.setconstants(1250, 1750, 4, deadzone = 0, alphanoise = 1000); await wait(200)
-
-        await multitask(
-            mydrivebase.trytimelimit(lambda: mydrivebase.sysrighttmotor.run_angle(1100, -190), 1000, lambda: mydrivebase.sysrighttmotor.hold()),
-            mydrivebase.trytimelimit(lambda: mydrivebase.syslefttmotor.run_angle(1000, 125), 1000, lambda: mydrivebase.syslefttmotor.hold())
-        )
-
-        await self.waituserinput(); await wait(250)
-
-        # ------------------------------------------------------------------------------------------ #  (modif version - faster)
-
-        await mydrivebase.gyrobackwards(10, 1100, typestop = mydrivebase.braketank); await wait(250)
-
-        await mydrivebase.gyroforwards(317, 775, typestop = mydrivebase.braketank, initpid = 1, typeemsk = 3); await wait(250)
-        await mydrivebase.trytimelimit(lambda: mydrivebase.sysrighttmotor.run_angle(1100, -4000), 4000, lambda: mydrivebase.sysrighttmotor.hold()); await wait(250);
-
-        await mydrivebase.gyrobackwards(141, 875, typestop = mydrivebase.braketank, initpid = 0); await wait(250)
-        await mydrivebase.turnleftt(42, 45, lfsign = 0, rgsign = 1, typestop = mydrivebase.braketank); await wait(250)
-
-        # ---> Go to mission <--- #
-        await mydrivebase.gyroforwards(224, 875, typestop = mydrivebase.braketank, initpid = 0); await wait(250)
-
-        await mydrivebase.trytimelimit(lambda: mydrivebase.syslefttmotor.run_angle(1100, -425), 650, lambda: mydrivebase.syslefttmotor.hold())
-
-        await mydrivebase.trytimelimit(lambda: mydrivebase.gyrobackwards(80, 875, typestop = mydrivebase.braketank, initpid = 0), 2000, mydrivebase.braketank); await wait(250)
-        await mydrivebase.gyroforwards(25, 625, typestop = mydrivebase.braketank, initpid = 0); await wait(250)
-        
-        await mydrivebase.trytimelimit(lambda: mydrivebase.syslefttmotor.run_angle(1100, +450), 750, lambda: mydrivebase.syslefttmotor.hold())
-
-        await mydrivebase.gyrobackwards(340, 1100, typestop = mydrivebase.braketank, initpid = 1); await wait(250)
-
-        # ------------------------------------------------------------------------------------------ #
-
-        return None
-
-    async def runk7(self): # e bomba runul asta #
-        
-        # ---> Transport all elements and put a flag + get minecart :) <---
-        mydrivebase.PID.setconstants(2150, 1750, 2, deadzone = 0, alphanoise = 1000); await wait(200); # ~small deadzone, because we need to be really precise with all movements (tested)
-                                                                                    
-        # ------------------------------------------------------------------------------------------ #
-                                                                                    
-        # ---> force the transmision closed at max super fast ;) <--- #
-        await mydrivebase.trytimelimit(lambda: mydrivebase.sysrighttmotor.run_angle(1100, -590), 375, lambda: mydrivebase.sysrighttmotor.brake()); 
-
-        await mydrivebase.gyrobackwards(25, 750, typestop = mydrivebase.braketank, initpid = 1); await wait(250)
-        await mydrivebase.gyroforwards(590, 750, typestop = mydrivebase.braketank, initpid = 1, initgyro = 1); await wait(250)
-
-        # ---> go and get the minecart <--- #
-        await mydrivebase.turnleftt(65, 40, lfsign = 0, rgsign = 1, typestop = mydrivebase.braketank, lowerspeedbound = 0); await wait(250)
-        
-        # ---> go on a curved trajectory <--- # 
-        mydrivebase.PID.deadzone = __maxint; await wait(200); 
-        await mydrivebase.gyroforwards(400, 675, offsetrg = 48, typestop = mydrivebase.braketank, initpid = 0); await wait(250)
-        mydrivebase.PID.deadzone = 0; await wait(200); 
-
-        # ---> collect minecart <--- #
-        await mydrivebase.trytimelimit(lambda: mydrivebase.sysrighttmotor.run_angle(1100, 700), 1250, lambda: mydrivebase.sysrighttmotor.hold()); await wait(250)
-        await mydrivebase.turnleftt(35, 40, lfsign = 0, rgsign = 1, typestop = mydrivebase.braketank, lowerspeedbound = 0); await wait(250)
-
-        mydrivebase.sysrighttmotor.run_angle(575, -575); await wait(250); # close while moving 
-        await mydrivebase.gyroforwards(520, 675, typestop = mydrivebase.braketank, initpid = 0); await wait(250)
-
-        # ------------------------------------------------------------------------------------------ #
-        
-        await mydrivebase.turnleftt(80, 40, lfsign = 0, rgsign = 1, typestop = mydrivebase.braketank, lowerspeedbound = 0);
-        
-        await mydrivebase.syslefttmotor.run_angle(660, 660); await wait(500);
-        await mydrivebase.trytimelimit(lambda: mydrivebase.sysrighttmotor.run_angle(425, -1100), 2000, lambda: mydrivebase.sysrighttmotor.brake()); 
-        
-        await mydrivebase.gyroforwards(50, 375, typestop = mydrivebase.braketank, initpid = 0); await wait(250)
-
-        await mydrivebase.gyrobackwards(75, 1100, typestop = mydrivebase.braketank, initpid = 0); await wait(250)
-
-        # ------------------------------------------------------------------------------------------ #
-
-        return None; # Final of run 7
-
-    # ---------------------------------------------------------------------------------------------------------------------------------------------------- #
+    # ---------------------------------------------------------------------------------- #
 
     async def runk11(self):
         mydrivebase.lefttmotor.dc(100)
@@ -671,7 +421,7 @@ class runmanager(runmethods):
         self.rundelay: int = 200
         self.maxrun: int = 12
 
-        self.computedelay: int = 250
+        self.changerundelay: int = 250
 
         return None
 
@@ -729,8 +479,8 @@ class runmanager(runmethods):
 
                 mydrivebase.hub.light.on(Color.ORANGE)
 
-            if(Button.LEFT in pressed): self.prevrun(); mydrivebase.hub.display.number(self.runkk); await wait(self.computedelay)
-            if(Button.RIGHT in pressed): self.nextrun(); mydrivebase.hub.display.number(self.runkk); await wait(self.computedelay)
+            if(Button.LEFT in pressed): self.prevrun(); mydrivebase.hub.display.number(self.runkk); await wait(self.changerundelay)
+            if(Button.RIGHT in pressed): self.nextrun(); mydrivebase.hub.display.number(self.runkk); await wait(self.changerundelay)
 
             await wait(__ttimeset); # wait x ms after each update to have some time to contemplate about some competitive programming problems :D
 
